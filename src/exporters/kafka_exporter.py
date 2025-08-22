@@ -1,20 +1,16 @@
-import orjson
 import time
 
-from kafka import KafkaAdminClient, KafkaProducer
 from kafka.admin import NewTopic
 
+from src.configs.kafka_conn import admin, producer
 from src.logger import logger
 
 
 class KafkaExporter:
-    def __init__(self, server, topic):
+    def __init__(self, topic):
         self.topic = topic
-        self.producer = KafkaProducer(
-            bootstrap_servers=server,
-            value_serializer=lambda v: orjson.dumps(v).encode("utf-8"),
-        )
-        self.admin = KafkaAdminClient(bootstrap_servers=server)
+        self.producer = producer
+        self.admin = admin
 
     def exist(self):
         topics = self.admin.list_topics()

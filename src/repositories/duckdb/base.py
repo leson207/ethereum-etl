@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Dict, List, Literal, Type
 
 import sqlalchemy as sa
-from sqlalchemy import select, text, tuple_
-from sqlalchemy.orm import Session
+from sqlalchemy import text
 from tabulate import tabulate
 
+from src.configs.duckdb import session
 from src.configs.environment import env
 from src.logger import logger
 
@@ -14,20 +14,16 @@ from src.logger import logger
 class BaseRepository:
     def __init__(
         self,
-        db: Session,
-        table_name: str,
-        pk_fields: List,
         sql_schema: Type,
         python_schema: Type,
     ):
-        self.db = db
-        self.table_name = table_name
+        self.db = session
         self.sql_schema = sql_schema
         self.python_schema = python_schema
-        self.pk_fields = pk_fields
+        self.table_name = sql_schema.__tablename__
         self.primary_keys = [col.name for col in sql_schema.__table__.primary_key]
 
-        self.db.execute(text("PRAGMA enable_progress_bar;"))
+        # self.db.execute(text("PRAGMA enable_progress_bar;"))
         self.db.execute(text("PRAGMA enable_optimizer;"))
         self.db.execute(
             text(
@@ -56,47 +52,6 @@ class BaseRepository:
 
         res = self.db.execute(text(f"PRAGMA table_info('{self.table_name}');"))
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
-
-    def filter_existing(self, data: List[dict]):
-        keys = [tuple(row[field] for field in self.pk_fields) for row in data]
-        pk_columns = [getattr(self.sql_schema, field) for field in self.pk_fields]
-        stmt = select(*pk_columns).where(tuple_(*pk_columns).in_(keys))
-        existing_keys = set(tuple(row) for row in self.db.execute(stmt).fetchall())
-
-        rows = [
-            row
-            for row in data
-            if tuple(row[field] for field in self.pk_fields) not in existing_keys
-        ]
-
-        total_count = len(data)
-        new_count = len(rows)
-        existing_count = total_count - new_count
-
-        logger.info(
-            f"📊 Total: {total_count:5} | New: {new_count:5} | Existing: {existing_count:5}"
-        )
-
-        return rows
-
-    def get_existing(self, data: List[dict]):
-        keys = [tuple(row[field] for field in self.pk_fields) for row in data]
-        pk_columns = [getattr(self.sql_schema, field) for field in self.pk_fields]
-        stmt = select("*").where(tuple_(*pk_columns).in_(keys))
-        cursor = self.db.execute(stmt)
-        columns = cursor.keys()
-        rows = cursor.fetchall()
-        existing_data = []
-        for row in rows:
-            obj = dict(zip(columns, row))
-            obj = self.python_schema(**obj)
-            existing_data.append(obj.model_dump())
-
-        total_count = len(data)
-        existing_count = len(rows)  # from DB
-        logger.info(f"Total count: {total_count:5} | Existing: {existing_count:5}")
-
-        return existing_data
 
     def _create(self, table_name: str = None):
         table_name = table_name or self.table_name
@@ -177,7 +132,9 @@ class BaseRepository:
             table_name = row[0]
             self._drop(table_name)
 
-    def create(self, exist_ok: bool = True, backup: bool = False, restore: bool = False):
+    def create(
+        self, exist_ok: bool = True, backup: bool = False, restore: bool = False
+    ):
         if backup:
             self._backup()
 

@@ -86,6 +86,7 @@ class BaseRepository:
         cursor = self.db.execute(stmt)
         columns = cursor.keys()
         rows = cursor.fetchall()
+
         existing_data = []
         for row in rows:
             obj = dict(zip(columns, row))

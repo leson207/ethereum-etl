@@ -15,7 +15,7 @@ class Throttler:
         padding: float = 0.0,
     ):
         self.rate_limit = rate_limit
-        self.period = period
+        self.period = period  # second
         self.padding = padding
         self.spacing = spacing or (period / rate_limit)
 

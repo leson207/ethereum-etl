@@ -1,64 +1,43 @@
 import asyncio
 
-import httpx
 import orjson
-from fake_useragent import UserAgent
 from tqdm.asyncio import tqdm_asyncio
 
-from src.fetchers.throttler import Throttler
 from src.logger import logger
-from src.repositories.base import BaseRepository
+from src.utils.progress_bar import get_progress_bar
 
 
 class BaseFetcher:
-    def __init__(self, client=None, repo: BaseRepository = None, pool_size: int = 10):
-        self.client = client or self.create_client()
-        self.repo = repo
-        self.semaphore = asyncio.Semaphore(pool_size)
-        self.throttler = Throttler(rate_limit=300 - pool_size, period=60, padding=0)
-
-    def create_client(self):
-        ua = UserAgent()
-        headers = {"User-Agent": ua.random, "Accept": "application/json"}
-        client = httpx.AsyncClient(
-            headers=headers, timeout=httpx.Timeout(5.0, connect=3.0)
-        )
-        return client
-
-    async def sem_task(self, func, args):
-        async with self.semaphore:
-            async with self.throttler:
-                return await func(*args)
+    def __init__(self, client, exporter=None):
+        self.client = client
+        self.exporter = exporter
 
     async def run(
-        self,
-        items,
-        initial=None,
-        total=None,
-        batch_size=30,
-        extract_existing=False,
-        return_existing=False,
+        self, items, initial=None, total=None, batch_size=1, show_progress=True
     ):
-        if not extract_existing and return_existing:
-            data = self.repo.get_existing(items)
-            for row in data:
-                yield row
+        tasks = []
+        for item in items:
+            task = asyncio.create_task(self._process(item))
+            tasks.append(task)
 
-        if not extract_existing:
-            items = self.repo.filter_existing(items)
+        p_bar = get_progress_bar(
+            tqdm_asyncio,
+            tasks,
+            initial=(initial or 0) // batch_size,
+            total=(total or len(tasks)) // batch_size,
+            show=show_progress,
+        )
 
-        if not items:
-            return
-
-        generator = self.process(items, initial, total, batch_size)
-
-        async for res in generator:
-            yield res
+        for coro in p_bar:
+            result = await coro
+            if result is None:
+                continue
+            yield result
 
     async def process(self, items, initial, total, batch_size):
         tasks = []
         for item in items:
-            task = asyncio.create_task(self.sem_task(self._run, (item,)))
+            task = asyncio.create_task(self._process(item))
             tasks.append(task)
 
         for coro in tqdm_asyncio.as_completed(
