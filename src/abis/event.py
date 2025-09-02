@@ -1,5 +1,5 @@
-from eth_utils import keccak, to_hex
 from eth_abi import decode
+from eth_utils import keccak, to_hex
 
 EVENT_ABI = {
     # https://github.com/Uniswap/v2-core/blob/master/contracts/interfaces/IUniswapV2Pair.sol
@@ -45,7 +45,11 @@ EVENT_ABI = {
                 {"type": "address", "name": "token0", "indexed": True},
                 {"type": "address", "name": "token1", "indexed": True},
                 {"type": "address", "name": "pair", "indexed": False},
-                {"type": "uint256", "name": "pairIndex", "indexed": False},  # couter of pair created by the factory contract include this. | uint short for uint256
+                {
+                    "type": "uint256",
+                    "name": "pairIndex",
+                    "indexed": False,
+                },  # couter of pair created by the factory contract include this. | uint short for uint256
             ],
             "name": "PairCreated",
             "type": "event",
@@ -107,7 +111,7 @@ EVENT_ABI = {
             "name": "PoolCreated",
             "type": "event",
         },
-    }
+    },
 }
 
 EVENT_TEXT_SIGNATURES = {}
@@ -119,13 +123,46 @@ for dex in EVENT_ABI:
     for event, schema in EVENT_ABI[dex].items():
         input_types = [input["type"] for input in schema["inputs"]]
 
-        text_signature = f"{schema["name"]}({','.join(input_types)})"
+        text_signature = f"{schema['name']}({','.join(input_types)})"
         hex_signature = to_hex(keccak(text=text_signature))
 
         EVENT_TEXT_SIGNATURES[dex][event] = text_signature
         EVENT_HEX_SIGNATURES[dex][event] = hex_signature
 
+
 def decode_event_input(dex, event, topics, data):
+    inputs = EVENT_ABI[dex][event]["inputs"]
+
+    indexed_inputs = [input for input in inputs if input["indexed"]]
+    other_inputs = [input for input in inputs if not input["indexed"]]
+
+    # different event may share the same keccak hash and indexed field do not affect the hash
+    # compare indexed len and topics length to ensure they are the same event
+    if len(indexed_inputs) + 1 != len(topics):
+        return None
+
+    decoded = {}
+    # start after topic[0] (event signature)
+    for input_def, topic in zip(indexed_inputs, topics[1:]):
+        # Indexed fields are in topics
+        # Addresses are last 40 hex chars
+        if input_def["type"] == "address":
+            decoded[input_def["name"]] = "0x" + topic[-40:]
+        else:
+            # decode numeric indexed (rare) from hex
+            decoded[input_def["name"]] = int(topic, 16)
+
+    # Process non-indexed fields from data
+    if other_inputs:
+        input_types = [i["type"] for i in other_inputs]
+        values = decode(input_types, bytes.fromhex(data[2:]))
+        for i, val in enumerate(values):
+            decoded[other_inputs[i]["name"]] = val
+
+    return decoded
+
+
+def decode_event_input_legacy(dex, event, topics, data):
     inputs = EVENT_ABI[dex][event]["inputs"]
 
     decoded = {}
@@ -133,7 +170,7 @@ def decode_event_input(dex, event, topics, data):
 
     # indexed input is in 'topics', but some wrield case it in 'data' instead, i assume it still follow the listing order of abi
     for input_def in inputs:
-        if topic_index==len(topics):
+        if topic_index == len(topics):
             break
         if input_def["indexed"]:
             # Indexed fields are in topics

@@ -17,7 +17,7 @@ from src.parsers.transaction_parser import TransactionParser
 from src.parsers.withdrawal_parser import WithdrawalParser
 from src.utils.enumeration import EntityType
 from src.parsers.token_transfer_parser import TokenTransferParser
-from src.parsers.swap_v3 import SwapExtractor
+from parsers.event_parser import SwapExtractor
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 

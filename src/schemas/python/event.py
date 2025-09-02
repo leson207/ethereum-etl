@@ -1,8 +1,8 @@
 from src.schemas.python.base import BaseSchema
 
 
-class Swap(BaseSchema):
-    event: str
+class Event(BaseSchema):
+    type: str
     dex: str
     pool_address: str
     amount0_in: int

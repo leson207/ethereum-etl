@@ -13,7 +13,7 @@ from src.clis.utils import get_mapper
 from src.parsers.raw_receipt_parser import RawReceiptParser
 
 from src.logger import logger
-
+from src.parsers.event_parser import EventParser
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
@@ -41,6 +41,7 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
     )
 
     raw_receipt_parser = RawReceiptParser(exporter=exporter, target=entity_types)
+    event_parser = EventParser(exporter=exporter)
 
     for batch_start_block in range(start_block, end_block + 1, process_batch_size):
         batch_end_block = min(batch_start_block + process_batch_size, end_block + 1)
@@ -69,10 +70,13 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             show_progress=True,
         )
 
+        event_parser.parse(exporter[EntityType.LOG])
+
         logger.info(f"Block range: {batch_start_block} - {batch_end_block}")
         logger.info(f"Num RawReceipt: {len(exporter[EntityType.RAW_RECEIPT])}")
         logger.info(f"Num Receipt: {len(exporter[EntityType.RECEIPT])}")
         logger.info(f"Num Log: {len(exporter[EntityType.LOG])}")
+        logger.info(f"Num Event: {len(exporter[EntityType.EVENT])}")
 
         exporter.export_all()
         exporter.clear_all()

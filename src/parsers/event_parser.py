@@ -1,17 +1,22 @@
-from tqdm.std import tqdm
-
-from schemas.python.event import Swap
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
+from src.schemas.python.event import Event
 from src.utils.enumeration import EntityType
-from src.utils.progress_bar import get_progress_bar
-from src.utils.event_abi import EVENT_HEX_SIGNATURES, decode_log
+from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input
 
 
 # https://ethereum.stackexchange.com/questions/12553/understanding-logs-and-log-blooms
-class SwapExtractor:
+class EventParser:
     def __init__(self, exporter):
         self.exporter = exporter
 
-    def extract(
+    def parse(
         self,
         items: list[dict],
         initial=None,
@@ -19,24 +24,32 @@ class SwapExtractor:
         batch_size=1,
         show_progress=True,
     ):
-        p_bar = get_progress_bar(
-            tqdm,
-            items,
-            initial=(initial or 0) // batch_size,
-            total=(total or len(items)) // batch_size,
-            show=show_progress,
-        )
+        with Progress(
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            disable=not show_progress,
+        ) as progress:
+            task = progress.add_task(
+                "Event: ",
+                total=(total or len(items)),
+                completed=(initial or 0),
+            )
 
-        for item in p_bar:
-            swap = self._extract(item)
-            if swap:
-                self.exporter.add_item(EntityType.SWAP, [swap.model_dump()])
+            for item in items:
+                event = self._parse(item)
+                if event:
+                    self.exporter.add_item(EntityType.EVENT, [event.model_dump()])
+                
+                progress.update(task, advance=batch_size)
 
-    def _extract(self, log: dict):
+    def _parse(self, log: dict):
         topics = log["topics"]
-        if topics is None or len(topics) < 1:
-            # This is normal, topics can be empty for anonymous events
+        if not topics:
             return None
+
         dispatch = {
             EVENT_HEX_SIGNATURES["uniswap_v2"]["pair_created"]: self._process_uniswap_v2_pair_created,
             EVENT_HEX_SIGNATURES["uniswap_v3"]["pool_created"]: self._process_uniswap_v3_pool_created,
@@ -53,8 +66,12 @@ class SwapExtractor:
             return None
 
         data = handler(log)
-        swap = Swap(
-            event=data["event"],
+        if not data:
+            print('a')
+            return None
+        
+        event = Event(
+            type=data["type"],
             dex=data["dex"],
             pool_address=data["pool_address"],
             amount0_in=data["amount0_in"],
@@ -65,13 +82,15 @@ class SwapExtractor:
             log_index=log["log_index"],
             block_number=log["block_number"],
         )
-        return swap
+        return event
 
     def _process_uniswap_v2_pair_created(self, log):
-        decode = decode_log("uniswap_v2", "pair_created", log)
+        decode = decode_event_input("uniswap_v2", "pair_created", log['topics'], log['data'])
+        if not decode:
+            return None
         
         return {
-            "event": "pair_created",
+            "type": "pair_created",
             "dex": "uniswap_v2",
             "pool_address": decode["pair"],
             "amount0_in": 0,
@@ -81,10 +100,12 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v3_pool_created(self, log):
-        decode = decode_log("uniswap_v3", "pool_created", log)
-        
+        decode = decode_event_input("uniswap_v3", "pool_created", log['topics'], log['data'])
+        if not decode:
+            return None
+
         return {
-            "event": "pair_created",
+            "type": "pair_created",
             "dex": "uniswap_v3",
             "pool_address": decode["pool"],
             "amount0_in": 0,
@@ -94,10 +115,12 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v2_mint(self, log):
-        decode = decode_log("uniswap_v2", "mint", log)
+        decode = decode_event_input("uniswap_v2", "mint", log['topics'], log['data'])
+        if not decode:
+            return None
         
         return {
-            "event": "mint",
+            "type": "mint",
             "dex": "uniswap_v2",
             "pool_address": log["address"],
             "amount0_in": decode["amount0"],
@@ -107,10 +130,12 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v3_mint(self, log):
-        decode = decode_log("uniswap_v3", "mint", log)
-
+        decode = decode_event_input("uniswap_v3", "mint", log['topics'], log['data'])
+        if not decode:
+            return None
+        
         return {
-            "event": "mint",
+            "type": "mint",
             "dex": "uniswap_v3",
             "pool_address": log["address"],
             "amount0_in": decode["amount0"],
@@ -120,10 +145,12 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v2_burn(self, log):
-        decode = decode_log("uniswap_v2", "burn", log)
+        decode = decode_event_input("uniswap_v2", "burn", log['topics'], log['data'])
+        if not decode:
+            return None
 
         return {
-            "event": "burn",
+            "type": "burn",
             "dex": "uniswap_v2",
             "pool_address": log["address"],
             "amount0_in": 0,
@@ -133,10 +160,12 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v3_burn(self, log):
-        decode = decode_log("uniswap_v3", "burn", log)
+        decode = decode_event_input("uniswap_v3", "burn", log['topics'], log['data'])
+        if not decode:
+            return None
 
         return {
-            "event": "burn",
+            "type": "burn",
             "dex": "uniswap_v3",
             "pool_address": log["address"],
             "amount0_in": 0,
@@ -146,12 +175,14 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v2_swap(self, log):
-        decode = decode_log("uniswap_v2", "swap", log)
+        decode = decode_event_input("uniswap_v2", "swap", log['topics'], log['data'])
+        if not decode:
+            return None
 
         # amount0In can amount0Out can both !=0
         # amount1In can amount1Out can both !=0
         return {
-            "event": "swap",
+            "type": "swap",
             "dex": "uniswap_v2",
             "pool_address": log["address"],
             "amount0_in": decode["amount0In"],
@@ -161,7 +192,9 @@ class SwapExtractor:
         }
 
     def _process_uniswap_v3_swap(self, log):
-        decode = decode_log("uniswap_v3", "swap", log)
+        decode = decode_event_input("uniswap_v3", "swap", log['topics'], log['data'])
+        if not decode:
+            return None
 
         amount_in = decode["amount0"]
         amount_out = decode["amount1"]
@@ -180,7 +213,7 @@ class SwapExtractor:
             amount1_out = -amount_out
 
         return {
-            "event": "swap",
+            "type": "swap",
             "dex": "uniswap_v3",
             "pool_address": log["address"],
             "amount0_in": amount0_in,
