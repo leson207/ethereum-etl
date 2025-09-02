@@ -9,5 +9,3 @@ class RawBlock(EntityMeta):
     block_number = Column(types.Integer, primary_key=True)
     included_transaction = Column(types.Boolean, primary_key=True)
     data = Column(types.JSON)
-
-    updated_time = Column(types.DateTime)

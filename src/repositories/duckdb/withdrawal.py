@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.withdrawal import Withdrawl as SQL_Withdrawal
+from src.schemas.duckdb.withdrawal import Withdrawal as SQL_Withdrawal
 from src.schemas.python.withdrawal import Withdrawal as Python_Withdrawal
 
 
@@ -29,7 +29,7 @@ class WithdrawalRepository(BaseRepository):
 
                 updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-                PRIMARY KEY (index, )
+                PRIMARY KEY (block_number, block_hash, index, )
             );
         """
         self.db.execute(text(query))

@@ -19,32 +19,33 @@ class TransactionRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS {table_name}
             (
-                transaction_type UBIGINT,
-                nonce UBIGINT,
-                gas UBIGINT,
-
-                max_fee_per_gas UBIGINT,
+                type                   UBIGINT,
+                chain_id               UBIGINT,
+                nonce                  UBIGINT,
+                gas                    UBIGINT,
+                max_fee_per_gas        UBIGINT,
                 max_priority_fee_per_gas UBIGINT,
-                max_fee_per_blob_gas UBIGINT,
+                to_address             TEXT,
+                value                  UHUGEINT,
+                access_list            JSON,
+                authorization_list     JSON,
+                input                  TEXT,
+                r                      TEXT,
+                s                      TEXT,
+                y_parity               TEXT,
+                v                      TEXT,
+                hash                   TEXT,
+                block_hash             TEXT,
+                block_number           UBIGINT,
+                transaction_index      UBIGINT,
+                from_address           TEXT,
+                gas_price              UBIGINT,
+                max_fee_per_blob_gas   UBIGINT,
+                blob_versioned_hashes  JSON,
 
-                to_address TEXT,
-                from_address TEXT,
+                updated_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-                value UHUGEINT,
-                input TEXT,
-
-                transaction_hash TEXT,
-                block_hash TEXT,
-                block_number UBIGINT,
-                transaction_index UBIGINT,
-
-                gas_price UBIGINT,
-
-                blob_versioned_hashes JSON,
-
-                updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-                PRIMARY KEY (transaction_hash, )
+                PRIMARY KEY (hash, )
             );
         """
         self.db.execute(text(query))

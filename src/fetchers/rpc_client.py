@@ -10,7 +10,7 @@ class RPCClient:
     def __init__(self, uri):
         self.uri = uri
         self.request_counter = itertools.count()
-        self.throttler = Throttler(rate_limit=25, period=1)
+        self.throttler = Throttler(rate_limit=50, period=1)
 
         timeout = httpx.Timeout(timeout=60)
         headers = {
@@ -20,17 +20,20 @@ class RPCClient:
         self.client = httpx.AsyncClient(
             headers=headers, http2=True, verify=False, timeout=timeout
         )
-
-    async def make_request(self, method, params):
+    
+    async def send_single_request(self, data: tuple[str, list]):
+        method, params = data
         payload = self.form_request(method, params)
         encoded = orjson.dumps(payload)
+
         async with self.throttler:
             responses = await self.client.post(self.uri, content=encoded)
+
         return orjson.loads(responses.content)
 
-    async def make_batch_request(self, batch_requests: list[tuple[str, list]]):
+    async def send_batch_request(self, data: list[tuple[str, list]]):
         payload = [
-            self.form_request(method, params) for method, params in batch_requests
+            self.form_request(method, params) for method, params in data
         ]
         encoded = orjson.dumps(payload)
 
@@ -41,13 +44,13 @@ class RPCClient:
             orjson.loads(responses.content), key=lambda response: response["id"]
         )
 
-    def form_request(self, method, params=None):
+    def form_request(self, method, params):
         request_id = next(self.request_counter)
         return {
             "id": request_id,
             "jsonrpc": "2.0",
             "method": method,
-            "params": params or [],
+            "params": params,
         }
 
     async def close(self):

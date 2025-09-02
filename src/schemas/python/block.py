@@ -1,42 +1,45 @@
-from datetime import datetime
-
-from pydantic import BaseModel, field_validator
 from typing import Optional
 
+from src.schemas.python.base import BaseSchema
 
-class Block(BaseModel):
-    hash: str
-    parent_hash: str
-    sha3_uncles: str
-    miner: str
-    state_root: str
-    transactions_root: str
-    receipts_root: str
-    logs_bloom: str
-    difficulty: int
+
+# https://docs.metamask.io/services/reference/ethereum/json-rpc-methods/eth_getblockbynumber/
+class Block(BaseSchema):
     number: int
+    hash: str
+    mix_hash: Optional[str]
+    parent_hash: str
+    nonce: str
+    sha3_uncles: str
+    logs_bloom: str
+    transactions_root: str
+    state_root: str
+    receipts_root: str
+    miner: str
+    difficulty: int
+    total_difficulty: Optional[int]
+    extra_data: str
+    size: int
     gas_limit: int
     gas_used: int
     timestamp: int
-    extra_data: str
-    mix_hash: Optional[str] = None
-    nonce: str
-    base_fee_per_gas: Optional[int] = None
-    withdrawals_root: Optional[str] = None
-    blob_gas_used: Optional[int] = None
-    excess_blob_gas: Optional[int] = None
-    parent_beacon_block_root: Optional[str] = None
-    requests_hash: Optional[str] = None
-    size: int
-    uncles: Optional[list] = None
-    total_difficulty: Optional[int] = None
+    uncles: Optional[list]
+
+    transaction_count: int
+
+    base_fee_per_gas: Optional[int]
+    withdrawals_root: Optional[str]
+    withdrawal_count: int
+
+    blob_gas_used: Optional[int]
+    excess_blob_gas: Optional[int]
+    parent_beacon_block_root: Optional[str]
+    requests_hash: Optional[str]
 
     transaction_count: int
     withdrawal_count: int
 
-    updated_time: datetime = datetime.now()
-
-    @field_validator(
+    _num_fields = (
         "number",
         "difficulty",
         "total_difficulty",
@@ -47,13 +50,6 @@ class Block(BaseModel):
         "base_fee_per_gas",
         "blob_gas_used",
         "excess_blob_gas",
-        mode="before"
     )
-    def hex_to_dec(cls, val, info):
-        if val is None or isinstance(val, int):
-            return val
 
-        try:
-            return int(val, 16)
-        except Exception:
-            raise Exception(f"Class: {cls.__name__} - Field: {info.field_name} - Value: {val}")
+    _address_fields = ()

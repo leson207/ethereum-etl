@@ -19,44 +19,45 @@ class BlockRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS {table_name}
             (
-                hash TEXT,
-                parent_hash TEXT,
-                sha3_uncles TEXT,
-                miner TEXT,
+                number                UBIGINT,
+                hash                  TEXT,
+                parent_hash           TEXT,
+                sha3_uncles           TEXT,
+                miner                 TEXT,
 
-                state_root TEXT,
-                transactions_root TEXT,
-                receipts_root TEXT,
+                state_root            TEXT,
+                transactions_root     TEXT,
+                receipts_root         TEXT,
 
-                logs_bloom TEXT,
-                difficulty UBIGINT,
-                number UBIGINT,
-                gas_limit UBIGINT,
-                gas_used UBIGINT,
-                timestamp UBIGINT,
-                extra_data TEXT,
+                logs_bloom            TEXT,
+                difficulty            UBIGINT,
+                total_difficulty      UBIGINT,
 
-                mix_hash TEXT,
-                nonce TEXT,
+                size                  UBIGINT,
+                gas_limit             UBIGINT,
+                gas_used              UBIGINT,
+                timestamp             UBIGINT,
+                extra_data            TEXT,
 
-                base_fee_per_gas UBIGINT,
-                withdrawals_root TEXT,
-                blob_gas_used UBIGINT,
-                excess_blob_gas UBIGINT,
+                mix_hash              TEXT,
+                nonce                 TEXT,
+
+                base_fee_per_gas      UBIGINT,
+                withdrawals_root      TEXT,
+                withdrawal_count      UBIGINT,
+
+                blob_gas_used         UBIGINT,
+                excess_blob_gas       UBIGINT,
                 parent_beacon_block_root TEXT,
-                requests_hash TEXT,
+                requests_hash         TEXT,
 
-                size UBIGINT,
-                uncles JSON,
-                total_difficulty UBIGINT,
+                uncles                JSON,
 
-                transaction_count UBIGINT,
-                withdrawal_count UBIGINT,
-
+                transaction_count     UBIGINT,
 
                 updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-                PRIMARY KEY (hash, )
+                PRIMARY KEY (number, hash)
             );
         """
         

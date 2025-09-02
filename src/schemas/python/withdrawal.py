@@ -1,9 +1,8 @@
-from datetime import datetime
-
-from pydantic import BaseModel, field_validator
+from src.schemas.python.base import BaseSchema
 
 
-class Withdrawal(BaseModel):
+# {'index', 'validatorIndex', 'amount', 'address'}
+class Withdrawal(BaseSchema):
     # foreign keys
     block_hash: str
     block_number: int
@@ -13,14 +12,6 @@ class Withdrawal(BaseModel):
     address: str
     amount: int
 
-    updated_time: datetime = datetime.now()
+    _num_fields = ("block_number", "index", "validator_index", "amount")
 
-    @field_validator("block_number", "index", "validator_index", "amount", mode="before")
-    def hex_to_dec(cls, val, info):
-        if val is None or isinstance(val, int):
-            return val
-
-        try:
-            return int(val, 16)
-        except Exception:
-            raise Exception(f"Class: {cls.__name__} - Field: {info.field_name} - Value: {val}")
+    _address_fields = ("address",)

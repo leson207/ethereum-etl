@@ -1,31 +1,34 @@
-from src.utils.enumeration import ExporterType
+from src.exporters.mapper import EntityExporterMapper
+from src.utils.enumeration import EntityType, ExporterType
 
 
-# TODO: re-design here
-class ExporterManager:
-    def __init__(self, entity_exporter_mapping):
+class ExportManager:
+    def __init__(self, mapper: EntityExporterMapper):
         self.data = {}
-        self.entity_exporter_mapping = entity_exporter_mapping
-        for entity_type in self.entity_exporter_mapping.data:
+        for entity_type in EntityType.values():
             self.data[entity_type] = []
 
-    def get_item(self, entity_type):
-        return self.data[entity_type]
+        self.mapper = mapper
 
-    def add_item(self, entity_type, items: list[dict]):
-        self.data[entity_type].extend(items)
+    def add_item(self, key, item: dict):
+        self.data[key].append(item)
 
-    def add_exporter(self, entity_type, exporter_type, exporter):
-        self.entity_exporter_mapping[entity_type][exporter_type] = exporter
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def clear_all(self):
+        for key in self.data:
+            self.clear(key)
+
+    def clear(self, key):
+        self.data[key].clear()
 
     def export_all(self):
         for entity_type in self.data:
             self.export(entity_type)
 
     def export(self, entity_type: str):
-        for exporter_type, exporter in self.entity_exporter_mapping[
-            entity_type
-        ].items():
+        for exporter_type, exporter in self.mapper[entity_type].items():
             if exporter is None:
                 continue
 
@@ -33,14 +36,3 @@ class ExporterManager:
                 exporter.insert(self.data[entity_type], deduplicate="replace")
             else:
                 exporter.export(self.data[entity_type])
-
-    def clear_all(self):
-        for entity_type in self.data:
-            self.clear(entity_type)
-
-    def clear(self, entity_type):
-        self.data[entity_type].clear()
-
-        # if len(self.data[entity_type]) > threshold:
-        #     for exporter in exporter[entity_type]:
-        #         exporter.export(self.data[entity_type])

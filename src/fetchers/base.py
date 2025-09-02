@@ -1,77 +1,120 @@
 import asyncio
 
-import orjson
-from tqdm.asyncio import tqdm_asyncio
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from src.logger import logger
-from src.utils.progress_bar import get_progress_bar
 
 
 class BaseFetcher:
-    def __init__(self, client, exporter=None):
+    def __init__(
+        self, client, exporter: list = [], max_retries: int = 5, backoff: float = 3
+    ):
         self.client = client
         self.exporter = exporter
+        self.max_retries = max_retries
+
+        self.backoff = backoff
+        self._lock = asyncio.Lock()
+        self._backoff_event = asyncio.Event()
+        self._backoff_event.set()
+
+    def _from_request(self, params: list[dict]):
+        pass
 
     async def run(
-        self, items, initial=None, total=None, batch_size=1, show_progress=True
+        self,
+        params,
+        initial=None,
+        total=None,
+        batch_size=30,
+        desc="Raw: ",
+        show_progress=True,
     ):
-        tasks = []
-        for item in items:
-            task = asyncio.create_task(self._process(item))
-            tasks.append(task)
+        requests = self._from_request(params)
 
-        p_bar = get_progress_bar(
-            tqdm_asyncio,
-            tasks,
-            initial=(initial or 0) // batch_size,
-            total=(total or len(tasks)) // batch_size,
-            show=show_progress,
-        )
+        with Progress(
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            disable=not show_progress,
+        ) as progress:
+            
+            task = progress.add_task(
+                description=desc,
+                total=(total or len(requests)),
+                completed=(initial or 0),
+            )
 
-        for coro in p_bar:
-            result = await coro
-            if result is None:
-                continue
-            yield result
+            tasks = [
+                asyncio.create_task(
+                    self._run(progress, task, requests[i : i + batch_size])
+                )
+                for i in range(0, len(requests), batch_size)
+            ]
 
-    async def process(self, items, initial, total, batch_size):
-        tasks = []
-        for item in items:
-            task = asyncio.create_task(self._process(item))
-            tasks.append(task)
+            for coro in asyncio.as_completed(tasks):
+                result = await coro
+                if result is None:
+                    continue
 
-        for coro in tqdm_asyncio.as_completed(
-            tasks,
-            initial=(initial or 0) // batch_size,
-            total=(total or len(items)) // batch_size,
-            desc="Processing: ",
-        ):
-            result = await coro
-            if result is None:
-                continue
-            yield result
+                result = [i.model_dump() for i in result]
+                self.exporter.extend(result)
 
-    async def _process(self, item):
-        max_retries = 3
+    async def _run(self, progress, task, requests):
+        res = await self._process(requests)
+        progress.update(task, advance=len(requests))
+        return res
 
-        for attempt in range(1, max_retries + 1):
+    # async def _process(self, requests):
+    #     for attempt in range(1, self.max_retries + 1):
+    #         try:
+    #             raws = await self.fetch(requests)
+    #             logger.debug(f"Successfully processed {len(requests)} requests")
+    #             return raws
+    #         except Exception as e:
+    #             logger.warning(
+    #                 f"[Attempt {attempt}/{self.max_retries}] Failed to process requests {requests}: {e}"
+    #             )
+    #             await asyncio.sleep(1)
+
+    #     logger.error(
+    #         f"Giving up on requests after {self.max_retries} attempts: {requests}"
+    #     )
+    #     return None
+
+    async def _process(self, requests):
+        for attempt in range(1, self.max_retries + 1):
+            await self._backoff_event.wait()
+
             try:
-                res = await self.extract(item)
-                logger.info(f"Successfully processed item: {item}")
-                return res
+                raws = await self.fetch(requests)
+                logger.debug(f"Successfully processed {len(requests)} requests")
+                return raws
             except Exception as e:
                 logger.warning(
-                    f"[Attempt {attempt}/{max_retries}] Failed to process item {item}: {e}"
+                    f"[Attempt {attempt}/{self.max_retries}] Failed to process {len(requests)} requests: {e}"
                 )
-                await asyncio.sleep(1)
+                if self._backoff_event.is_set():
+                    async with self._lock:
+                        if self._backoff_event.is_set():  # Double-checked locking (safe in Python because of GIL) https://en.wikipedia.org/wiki/Double-checked_locking
+                            self._backoff_event.clear()
+                            logger.debug(f"⏳ Global backoff {self.backoff}s...")
+                            await asyncio.sleep(self.backoff)
+                            self._backoff_event.set()
 
-        logger.error(f"Giving up on item after {max_retries} attempts: {item}")
+        logger.error(
+            f"Giving up on requests after {self.max_retries} attempts: {len(requests)} request"
+        )
         return None
 
-    async def extract(self, item):
-        response = await self.client.get(item)
-        data = orjson.loads(response.content)
-        return data
-
-    async def close(self):
-        await self.client.aclose()
+    async def fetch(self, requests):
+        pass

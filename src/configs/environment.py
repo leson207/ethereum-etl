@@ -14,16 +14,14 @@ def get_env_filename():
 
 class EnvironmentSettings(BaseSettings):
     DATABASE_DIALECT: str
-    DATABASE_PREFIX: str
-    DATABASE_SUFFIX: str
-    DATABASE_NAME: str = Field(default_factory=str)
-
     CLICKHOUSE_SERVER: str
     CLICKHOUSE_USERNAME: str
     CLICKHOUSE_PASSWORD:str
+    DATABASE_NAME: str = Field(default_factory=str)
+
     KAFKA_SERVER: str
 
-    NETWORKS: list[str]
+    ENVIRONMENT_NAME: str
     DEBUG_MODE: bool
 
     def __init__(self, **data):
@@ -35,7 +33,7 @@ class EnvironmentSettings(BaseSettings):
 
     @model_validator(mode="after")
     def compute(self):
-        self.DATABASE_NAME = self.DATABASE_PREFIX + self.DATABASE_SUFFIX
+        self.DATABASE_NAME = self.DATABASE_NAME + self.ENVIRONMENT_NAME
         return self
 
     model_config = SettingsConfigDict(

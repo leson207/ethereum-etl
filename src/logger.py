@@ -13,7 +13,7 @@ log_file = env._local_log_folder / f"{logger_name}-{timestamp}.log"
 
 def create_logging_logger():
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG if env.DEBUG_MODE else logging.INFO)
 
     file_handler = logging.FileHandler(log_file)
     stdout_handler = logging.StreamHandler(sys.stdout)
@@ -40,7 +40,7 @@ def create_loguru_logger():
     loguru_logger.add(
         log_file,
         format="[<green>{time:YYYY-MM-DD HH:mm:ss}</green> - <cyan>{name}</cyan> - <level>{level}</level>] - {message}",
-        level="DEBUG",
+        level="DEBUG" if env.DEBUG_MODE else "INFO",
         enqueue=False,
         rotation="10 MB",
         retention="10 days",
@@ -52,7 +52,7 @@ def create_loguru_logger():
     loguru_logger.add(
         sink=sys.stdout,
         format="[<green>{time:HH:mm:ss}</green> - <cyan>{name}</cyan> - <level>{level}</level>] - {message}",
-        level="DEBUG",
+        level="DEBUG" if env.DEBUG_MODE else "INFO",
     )
 
     loguru_logger.info(f"{logger_name} logger created")

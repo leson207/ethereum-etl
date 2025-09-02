@@ -1,20 +1,16 @@
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, Integer, String
 
 from src.schemas.duckdb.base import EntityMeta
 
 
-class Withdrawl(EntityMeta):
+class Withdrawal(EntityMeta):
     __tablename__ = "withdrawal"
 
-    # Foreign keys
-    block_hash = Column(String)
-    block_number = Column(Integer)
+    block_hash = Column(String, primary_key=True)
+    block_number = Column(Integer, primary_key=True)
 
     # Core fields
     index = Column(Integer, primary_key=True)
     validator_index = Column(Integer)
     address = Column(String)
     amount = Column(Integer)
-
-    # Metadata
-    updated_time = Column(DateTime)
