@@ -41,7 +41,7 @@ class EventParser:
             for item in items:
                 event = self._parse(item)
                 if event:
-                    self.exporter.add_item(EntityType.EVENT, [event.model_dump()])
+                    self.exporter.add_item(EntityType.EVENT, event.model_dump())
                 
                 progress.update(task, advance=batch_size)
 

@@ -9,7 +9,7 @@ class Log(BaseSchema):
     data: str
     block_hash: str
     block_number: int
-    block_timestamp: int
+    block_timestamp: Optional[int]
     transaction_hash: str
     transaction_index: int
     log_index: int
