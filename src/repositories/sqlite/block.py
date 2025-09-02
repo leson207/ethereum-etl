@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
-from src.schemas.sqlite.block import Block as SQL_Block
+from src.schemas.sql.block import Block as SQL_Block
 from src.schemas.python.block import Block as Python_Block
 
 

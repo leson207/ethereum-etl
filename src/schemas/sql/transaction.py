@@ -1,6 +1,6 @@
 from sqlalchemy import JSON, Column, Integer, String
 
-from src.schemas.duckdb.base import EntityMeta
+from src.schemas.sql.base import EntityMeta
 
 
 class Transaction(EntityMeta):

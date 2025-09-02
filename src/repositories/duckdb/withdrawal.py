@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.withdrawal import Withdrawal as SQL_Withdrawal
+from src.schemas.sql.withdrawal import Withdrawal as SQL_Withdrawal
 from src.schemas.python.withdrawal import Withdrawal as Python_Withdrawal
 
 

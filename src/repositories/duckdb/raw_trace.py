@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.raw_trace import RawTrace as SQL_RawTrace
+from src.schemas.sql.raw_trace import RawTrace as SQL_RawTrace
 from src.schemas.python.raw_trace import RawTrace as Python_RawTrace
 
 

@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.raw_receipt import RawReceipt as SQL_RawReceipt
+from src.schemas.sql.raw_receipt import RawReceipt as SQL_RawReceipt
 from src.schemas.python.raw_receipt import RawReceipt as Python_RawReceipt
 
 

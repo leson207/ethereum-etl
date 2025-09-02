@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.raw_block import RawBlock as SQL_RawBlock
+from src.schemas.sql.raw_block import RawBlock as SQL_RawBlock
 from src.schemas.python.raw_block import RawBlock as Python_RawBlock
 
 

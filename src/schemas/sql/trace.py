@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, JSON
-from src.schemas.duckdb.base import EntityMeta
+from src.schemas.sql.base import EntityMeta
 
 
 class Trace(EntityMeta):

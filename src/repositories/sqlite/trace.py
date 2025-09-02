@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
-from src.schemas.sqlite.trace import Trace as SQL_Trace
+from src.schemas.sql.trace import Trace as SQL_Trace
 from src.schemas.python.trace import Trace as Python_Trace
 
 

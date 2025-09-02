@@ -28,7 +28,7 @@ class BaseRepository:
 
     def inspect(self):
         # Show existing tables
-        res = self.db.execute(text("SHOW TABLES;"))
+        res = self.db.execute(text("SELECT name, type FROM sqlite_master WHERE type IN ('table','view');"))
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         # Show row data
@@ -42,7 +42,7 @@ class BaseRepository:
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         # Show table schema
-        res = self.db.execute(text(f"DESCRIBE {self.table_name};"))
+        res = self.db.execute(text(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{self.table_name}';"))
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         res = self.db.execute(text(f"PRAGMA table_info('{self.table_name}');"))

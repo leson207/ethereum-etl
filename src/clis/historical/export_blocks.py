@@ -97,4 +97,4 @@ if __name__ == "__main__":
 
 # python -m src.clis.historical.export_blocks --start-block 23170000 --end-block 23170030 \
 #     --process-batch-size 100 --request-batch-size 30 \
-# --entity_types raw_block,block,transaction,withdrawal --exporter_types duckdb
+# --entity_types raw_block,block,transaction,withdrawal --exporter_types sqlite

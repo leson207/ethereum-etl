@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.receipt import Receipt as SQL_Receipt
+from src.schemas.sql.receipt import Receipt as SQL_Receipt
 from src.schemas.python.receipt import Receipt as Python_Receipt
 
 

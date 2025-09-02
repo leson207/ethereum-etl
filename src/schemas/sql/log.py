@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, JSON
-from src.schemas.duckdb.base import EntityMeta
+from src.schemas.sql.base import EntityMeta
 
 
 class Log(EntityMeta):

@@ -28,6 +28,7 @@ def main():
         repo = repo_type()
         repo.create(exist_ok=False, backup=False, restore = False)
             
+    # RawBlockRepository().inspect()
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.duckdb.base import BaseRepository
-from src.schemas.duckdb.log import Log as SQL_Log
+from src.schemas.sql.log import Log as SQL_Log
 from src.schemas.python.log import Log as Python_Log
 
 

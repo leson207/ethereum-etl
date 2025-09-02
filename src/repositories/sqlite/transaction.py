@@ -2,7 +2,7 @@ from sqlalchemy import text
 
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
-from src.schemas.sqlite.transaction import Transaction as SQL_Transaction
+from src.schemas.sql.transaction import Transaction as SQL_Transaction
 from src.schemas.python.transaction import Transaction as Python_Transaction
 
 

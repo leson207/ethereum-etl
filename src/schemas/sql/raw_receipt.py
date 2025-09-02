@@ -1,6 +1,6 @@
 from sqlalchemy import Column, types
 
-from src.schemas.sqlite.base import EntityMeta
+from src.schemas.sql.base import EntityMeta
 
 
 class RawReceipt(EntityMeta):
