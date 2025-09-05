@@ -14,6 +14,7 @@ from src.parsers.event_parser import EventParser
 from src.parsers.raw_block_parser import RawBlockParser
 from src.parsers.raw_receipt_parser import RawReceiptParser
 from src.utils.enumeration import EntityType
+from src.parsers.enrich_event import enrich_swaps
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 

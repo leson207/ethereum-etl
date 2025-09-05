@@ -3,7 +3,7 @@ import asyncio
 
 import uvloop
 
-from src.parsers.raw_trace_parser import RawTraceParser
+from src.parsers.trace_parser import TraceParser
 from src.exporters.manager import ExportManager
 from src.fetchers.rpc_client import RPCClient
 from src.fetchers.raw_trace import RawTraceFetcher
@@ -33,9 +33,9 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
     res = await client.send_batch_request([("web3_clientVersion", [])])
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    fetcher = RawTraceFetcher(client=client, exporter=exporter[EntityType.RAW_TRACE])
+    fetcher = RawTraceFetcher(client=client, exporter=exporter)
 
-    raw_trace_parser = RawTraceParser(exporter=exporter, target=entity_types)
+    trace_parser = TraceParser(exporter=exporter)
 
     for batch_start_block in range(start_block, end_block + 1, process_batch_size):
         batch_end_block = min(batch_start_block + process_batch_size, end_block + 1)
@@ -49,14 +49,13 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,
             batch_size=request_batch_size,
-            desc="Raw Trace: ",
             show_progress=True,
         )
 
         raw_traces = [
             raw_trace["data"] for raw_trace in exporter[EntityType.RAW_TRACE]
         ]
-        raw_trace_parser.parse(
+        trace_parser.parse(
             raw_traces,
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,

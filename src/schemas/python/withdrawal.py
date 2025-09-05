@@ -4,7 +4,6 @@ from src.schemas.python.base import BaseSchema
 # {'index', 'validatorIndex', 'amount', 'address'}
 class Withdrawal(BaseSchema):
     # foreign keys
-    block_hash: str
     block_number: int
 
     index: int

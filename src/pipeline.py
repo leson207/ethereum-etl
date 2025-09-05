@@ -9,9 +9,9 @@ from src.parsers.block_parser import BlockParser
 from parsers.raw_block_parser import (
     BlockTransactionWithdrawalParser,
 )
-from src.parsers.log_parser import LogParser
+from parsers.address_parser import LogParser
 from parsers.raw_receipt_parser import ReceiptLogParser
-from src.parsers.receipt_parser import ReceiptParser
+from parsers.transfer_parser import ReceiptParser
 from parsers.raw_trace_parser import TraceParser
 from src.parsers.transaction_parser import TransactionParser
 from src.parsers.withdrawal_parser import WithdrawalParser

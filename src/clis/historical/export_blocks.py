@@ -8,7 +8,9 @@ from src.exporters.manager import ExportManager
 from src.fetchers.raw_block import RawBlockFetcher
 from src.fetchers.rpc_client import RPCClient
 from src.logger import logger
-from src.parsers.raw_block_parser import RawBlockParser
+from src.parsers.block_parser import BlockParser
+from src.parsers.transaction_parser import TransactionParser
+from src.parsers.withdrawal_parser import WithdrawalParser
 from src.utils.enumeration import EntityType
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -33,12 +35,11 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
     res = await client.send_batch_request([("web3_clientVersion", [])])
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    fetcher = RawBlockFetcher(client=client, exporter=exporter[EntityType.RAW_BLOCK])
+    fetcher = RawBlockFetcher(client=client, exporter=exporter)
 
-    raw_block_parser = RawBlockParser(
-        exporter=exporter,
-        target=entity_types
-    )
+    block_parser = BlockParser(exporter=exporter)
+    transaction_parser = TransactionParser(exporter=exporter)
+    withdrawal_parser = WithdrawalParser(exporter=exporter)
 
     for batch_start_block in range(start_block, end_block + 1, process_batch_size):
         batch_end_block = min(batch_start_block + process_batch_size, end_block + 1)
@@ -53,14 +54,27 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,
             batch_size=request_batch_size,
-            desc="Raw Block: ",
             show_progress=True,
         )
 
         raw_blocks = [
             raw_block["data"] for raw_block in exporter[EntityType.RAW_BLOCK]
         ]
-        raw_block_parser.parse(
+        block_parser.parse(
+            raw_blocks,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        transaction_parser.parse(
+            raw_blocks,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        withdrawal_parser.parse(
             raw_blocks,
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,

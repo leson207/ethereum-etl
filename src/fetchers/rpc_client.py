@@ -1,48 +1,28 @@
 import itertools
 
-import httpx
-import orjson
-
+from src.fetchers.json_client import JsonClient
 from src.fetchers.throttler import Throttler
 
 
-class RPCClient:
+class RPCClient(JsonClient):
     def __init__(self, uri):
+        super().__init__(Throttler(rate_limit=50, period=1))
+
         self.uri = uri
         self.request_counter = itertools.count()
-        self.throttler = Throttler(rate_limit=50, period=1)
 
-        timeout = httpx.Timeout(timeout=60)
-        headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "web3.py/7.13.0/web3.providers.rpc.async_rpc.AsyncHTTPProvider",
-        }
-        self.client = httpx.AsyncClient(
-            headers=headers, http2=True, verify=False, timeout=timeout
-        )
-    
-    async def send_single_request(self, data: tuple[str, list]):
-        method, params = data
+    async def send_single_request(self, method: str, params: list):
         payload = self.form_request(method, params)
-        encoded = orjson.dumps(payload)
+        response = await self.post(self.uri, payload=payload)
 
-        async with self.throttler:
-            responses = await self.client.post(self.uri, content=encoded)
-
-        return orjson.loads(responses.content)
+        return response
 
     async def send_batch_request(self, data: list[tuple[str, list]]):
-        payload = [
-            self.form_request(method, params) for method, params in data
-        ]
-        encoded = orjson.dumps(payload)
+        payload = [self.form_request(method, params) for method, params in data]
 
-        async with self.throttler:
-            responses = await self.client.post(self.uri, content=encoded)
+        responses = await self.post(self.uri, payload=payload)
 
-        return sorted(
-            orjson.loads(responses.content), key=lambda response: response["id"]
-        )
+        return sorted(responses, key=lambda response: response["id"])
 
     def form_request(self, method, params):
         request_id = next(self.request_counter)

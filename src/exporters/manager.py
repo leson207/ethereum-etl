@@ -10,8 +10,11 @@ class ExportManager:
 
         self.mapper = mapper
 
-    def add_item(self, key, item: dict):
+    def add_item(self, key, item):
         self.data[key].append(item)
+
+    def add_items(self, key, items: list):
+        self.data[key].extend(items)
 
     def __getitem__(self, key):
         return self.data[key]

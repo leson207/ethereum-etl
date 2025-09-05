@@ -1,20 +1,17 @@
 import asyncio
 
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
-
+from src.exporters.manager import ExportManager
+from src.fetchers.json_client import JsonClient
 from src.logger import logger
 
 
 class BaseFetcher:
     def __init__(
-        self, client, exporter: list = [], max_retries: int = 5, backoff: float = 3
+        self,
+        client: JsonClient,
+        exporter: ExportManager,
+        max_retries: int = 5,
+        backoff: float = 3,
     ):
         self.client = client
         self.exporter = exporter
@@ -34,40 +31,9 @@ class BaseFetcher:
         initial=None,
         total=None,
         batch_size=30,
-        desc="Raw: ",
         show_progress=True,
     ):
-        requests = self._from_request(params)
-
-        with Progress(
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(),
-            MofNCompleteColumn(),
-            TimeElapsedColumn(),
-            TimeRemainingColumn(),
-            disable=not show_progress,
-        ) as progress:
-            
-            task = progress.add_task(
-                description=desc,
-                total=(total or len(requests)),
-                completed=(initial or 0),
-            )
-
-            tasks = [
-                asyncio.create_task(
-                    self._run(progress, task, requests[i : i + batch_size])
-                )
-                for i in range(0, len(requests), batch_size)
-            ]
-
-            for coro in asyncio.as_completed(tasks):
-                result = await coro
-                if result is None:
-                    continue
-
-                result = [i.model_dump() for i in result]
-                self.exporter.extend(result)
+        pass
 
     async def _run(self, progress, task, requests):
         res = await self._process(requests)

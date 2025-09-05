@@ -1,34 +1,60 @@
-def main():
-    from src.repositories.sqlite.raw_block import RawBlockRepository
-    from src.repositories.sqlite.block import BlockRepository
-    from src.repositories.sqlite.transaction import TransactionRepository
-    from src.repositories.sqlite.withdrawal import WithdrawalRepository
+import asyncio
 
-    from src.repositories.sqlite.raw_receipt import RawReceiptRepository
-    from src.repositories.sqlite.receipt import ReceiptRepository
-    from src.repositories.sqlite.log import LogRepository
+from src.fetchers.raw_block import RawBlockFetcher
+from src.fetchers.raw_receipt import RawReceiptFetcher
+from src.fetchers.raw_trace import RawTraceFetcher
+from src.fetchers.rpc_client import RPCClient
+from src.utils.common import dump_json
 
-    from src.repositories.sqlite.raw_trace import RawTraceRepository
-    from src.repositories.sqlite.trace import TraceRepository
 
-    repo_types = [
-        RawBlockRepository,
-        BlockRepository,
-        TransactionRepository,
-        WithdrawalRepository,
+async def fetch_block(client):
+    res = []
+    fetcher = RawBlockFetcher(client, exporter=res)
+    params = [{"block_number": 23_224_053, "included_transaction": True}]
 
-        RawReceiptRepository,
-        ReceiptRepository,
-        LogRepository,
+    await fetcher.run(
+        params=params,
+        desc="Raw block: ",
+        show_progress=True,
+    )
+    dump_json("raw_block.json", res[0])
 
-        RawTraceRepository,
-        TraceRepository
-    ]
-    for repo_type in repo_types:
-        repo = repo_type()
-        repo.create(exist_ok=False, backup=False, restore = False)
-            
-    # RawBlockRepository().inspect()
+
+async def fetch_receipt(client):
+    res = []
+    fetcher = RawReceiptFetcher(client, exporter=res)
+    params = [{"block_number": 23_224_053}]
+
+    await fetcher.run(
+        params=params,
+        desc="Raw receipt: ",
+        show_progress=True,
+    )
+    dump_json("raw_receipt.json", res[0])
+
+
+async def fetch_trace(client):
+    res = []
+    fetcher = RawTraceFetcher(client, exporter=res)
+    params = [{"block_number": 23_224_053}]
+
+    await fetcher.run(
+        params=params,
+        desc="Raw trace: ",
+        show_progress=True,
+    )
+    dump_json("raw_trace.json", res[0])
+
+
+async def main():
+    client = RPCClient(
+        "https://eth-pokt.nodies.app"
+    )
+
+    await fetch_block(client)
+    await fetch_receipt(client)
+    # await fetch_trace(client)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -46,7 +46,7 @@ class Throttler:
             # Wait until the oldest timestamp exits the time window
             sleep_duration = self._task_logs[0] + self.period - time.monotonic()
             if sleep_duration > 0:
-                logger.info(
+                logger.debug(
                     f"Throttler sleeping for {sleep_duration + self.padding:.3f} seconds..."
                 )
                 await asyncio.sleep(sleep_duration + self.padding)

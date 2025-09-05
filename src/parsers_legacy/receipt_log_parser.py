@@ -1,7 +1,7 @@
 from rich.progress import Progress
 
-from src.parsers.log_parser import LogParser
-from src.parsers.receipt_parser import ReceiptParser
+from parsers.address_parser import LogParser
+from parsers.transfer_parser import ReceiptParser
 
 
 class ReceiptLogParser:

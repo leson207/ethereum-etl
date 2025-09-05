@@ -8,12 +8,18 @@ from src.utils.enumeration import EntityType
 from src.exporters.manager import ExportManager
 from src.fetchers.rpc_client import RPCClient
 from src.fetchers.raw_receipt import RawReceiptFetcher
+
 from src.clis.utils import get_mapper
 
-from src.parsers.raw_receipt_parser import RawReceiptParser
+from src.parsers.receipt_parser import ReceiptParser
+from src.parsers.log_parser import LogParser
+from src.parsers.transfer_parser import TransferParser
+from src.parsers.contract_parser import ContractParser
+from src.parsers.abi_parser import ABIParser
+from src.parsers.account_parser import AccountParser
+
 
 from src.logger import logger
-from src.parsers.event_parser import EventParser
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
@@ -36,12 +42,14 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
     res = await client.send_batch_request([("web3_clientVersion", [])])
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    fetcher = RawReceiptFetcher(
-        client=client, exporter=exporter[EntityType.RAW_RECEIPT]
-    )
+    fetcher = RawReceiptFetcher(client=client, exporter=exporter)
 
-    raw_receipt_parser = RawReceiptParser(exporter=exporter, target=entity_types)
-    event_parser = EventParser(exporter=exporter)
+    receipt_parser = ReceiptParser(exporter=exporter)
+    log_parser = LogParser(exporter=exporter)
+    transfer_parser = TransferParser(exporter=exporter)
+    contract_parser = ContractParser(exporter=exporter)
+    abi_parser = ABIParser(exporter=exporter)
+    account_parser = AccountParser(exporter=exporter)
 
     for batch_start_block in range(start_block, end_block + 1, process_batch_size):
         batch_end_block = min(batch_start_block + process_batch_size, end_block + 1)
@@ -55,14 +63,41 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,
             batch_size=request_batch_size,
-            desc="Raw Receipt: ",
             show_progress=True,
         )
 
         raw_receipts = [
             raw_receipt["data"] for raw_receipt in exporter[EntityType.RAW_RECEIPT]
         ]
-        raw_receipt_parser.parse(
+        receipt_parser.parse(
+            raw_receipts,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        log_parser.parse(
+            raw_receipts,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        transfer_parser.parse(
+            raw_receipts,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        account_parser.parse(
+            raw_receipts,
+            initial=batch_start_block - start_block,
+            total=end_block - start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
+        await contract_parser.parse(
             raw_receipts,
             initial=batch_start_block - start_block,
             total=end_block - start_block + 1,
@@ -70,13 +105,24 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             show_progress=True,
         )
 
-        event_parser.parse(exporter[EntityType.LOG])
+        abi_strings = [contract['abi'] for contract in exporter[EntityType.CONTRACT_ADDRESS]]
+        abi_parser.parse(
+            abi_strings,
+            initial=0,
+            total=len(abi_strings),
+            batch_size=1,
+            show_progress=True,
+        )
+
 
         logger.info(f"Block range: {batch_start_block} - {batch_end_block}")
         logger.info(f"Num RawReceipt: {len(exporter[EntityType.RAW_RECEIPT])}")
         logger.info(f"Num Receipt: {len(exporter[EntityType.RECEIPT])}")
         logger.info(f"Num Log: {len(exporter[EntityType.LOG])}")
-        logger.info(f"Num Event: {len(exporter[EntityType.EVENT])}")
+        logger.info(f"Num Transfer: {len(exporter[EntityType.TRANSFER])}")
+        logger.info(f"Num Account: {len(exporter[EntityType.ACCOUNT_ADDRESS])}")
+        logger.info(f"Num Contract: {len(exporter[EntityType.CONTRACT_ADDRESS])}")
+        logger.info(f"Num ABI: {len(exporter[EntityType.ABI])}")
 
         exporter.export_all()
         exporter.clear_all()

@@ -12,13 +12,13 @@ from src.parsers.transaction_parser import TransactionParser
 from src.parsers.withdrawal_parser import WithdrawalParser
 from parsers.raw_block_parser import BlockTransactionWithdrawalParser
 from parsers.raw_receipt_parser import ReceiptLogParser
-from src.parsers.log_parser import LogParser
+from parsers.address_parser import LogParser
 from src.utils.entity_exporter_mapping import EntityExporterMapper
 from src.utils.enumeration import EntityType, ExporterType
 from src.fetchers.receipt_fetcher import ReceiptFetcher
 from src.exporters.manager import ExporterManager
 from src.fetchers.throttler import Throttler
-from src.parsers.receipt_parser import ReceiptParser
+from parsers.transfer_parser import ReceiptParser
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 async def phase_one(client, exporter, start_block, end_block):

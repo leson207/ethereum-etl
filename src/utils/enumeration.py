@@ -7,6 +7,11 @@ class EntityType:
     RAW_RECEIPT = "raw_receipt"
     RECEIPT = "receipt"
     LOG = "log"
+    TRANSFER = "transfer"
+    CONTRACT_ADDRESS = "contract_address"
+    ACCOUNT_ADDRESS = "account_address"
+    ABI = "abi"
+
     EVENT = "event"
 
     RAW_TRACE = "raw_trace"
