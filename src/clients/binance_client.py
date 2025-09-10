@@ -5,11 +5,13 @@ import orjson
 
 from src.clients.throttler import Throttler
 from src.logger import logger
+from src.services.cache_service import cache_service
 
 
-class JsonClient:
-    def __init__(self, throttler: Throttler, max_retries: int = 5, backoff: float = 3):
-        self.throttler = throttler
+class BinanceClient:
+    def __init__(self, url, max_retries: int = 5, backoff: float = 3):
+        self.url = url
+
         timeout = httpx.Timeout(timeout=60)
         headers = {
             "Content-Type": "application/json",
@@ -18,31 +20,45 @@ class JsonClient:
         self.client = httpx.AsyncClient(
             headers=headers, http2=True, verify=False, timeout=timeout
         )
+        self.throttler = Throttler(rate_limit=5, period=1)
 
         self.max_retries = max_retries
-
         self.backoff = backoff
         self._lock = asyncio.Lock()
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def _get(self, url, params):
+    async def get_price(self, symbol, timestamp):
+        path = "aggTrades"
+        params = {"symbol": symbol, "startTime": timestamp, "limit": 1}
+        key = f"binance_{path}_{params['symbol']}_{params['startTime']}"
+        result = cache_service.get(key)
+        if result:
+            return orjson.loads(result)
+
+        response = await self.retry(self._get_price, path, params)
+        result = response[0]
+        cache_service.set(key, orjson.dumps(result).decode("utf-8"))
+        return result
+
+    async def _get_price(self, path, params):
         async with self.throttler:
-            response = await self.client.get(url, params=params)
+            response = await self.client.get(self.url + "/" + path, params=params)
+        response = orjson.loads(response.content)
+        if "code" in response:
+            raise Exception(f"Binance error: {response['msg']}")
+        return response
 
-        return orjson.loads(response.content)
-
-    async def post(self, uri, payload):
+    async def retry(self, func, path, params):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
-
             try:
-                raws = await self._post(uri, payload)
-                logger.debug(f"Successfully processed {len(payload)} requests")
-                return raws
+                response = await func(path, params)
+                logger.debug(f"Successfully processed 1 request - Params: {params}")
+                return response
             except Exception as e:
                 logger.warning(
-                    f"[Attempt {attempt}/{self.max_retries}] Failed to process {len(payload)} requests: {e}"
+                    f"[Attempt {attempt}/{self.max_retries}] Failed to process request - Params: {params} - {e}"
                 )
                 if self._backoff_event.is_set():
                     async with self._lock:
@@ -53,23 +69,9 @@ class JsonClient:
                             self._backoff_event.set()
 
         logger.error(
-            f"Giving up on requests after {self.max_retries} attempts: {len(payload)} request"
+            f"Giving up on requests after {self.max_retries} attempts: 1 request - Params: {params}"
         )
         return None
-
-    async def _post(self, uri, payload):
-        encoded = orjson.dumps(payload)
-        async with self.throttler:
-            responses = await self.client.post(uri, content=encoded)
-
-        return orjson.loads(responses.content)
-        # try:
-        #     tmp = orjson.loads(responses.content)
-        #     print('8'*100)
-        #     return tmp
-        # except:
-        #     print(responses.content)
-        #     raise
 
     async def close(self):
         await self.client.aclose()

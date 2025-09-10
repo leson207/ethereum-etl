@@ -3,18 +3,13 @@ import asyncio
 
 import uvloop
 
-# from src.clients.rpc_client import RpcClient
-from src.clients.rpc_client_v2 import RpcClient
+from src.clients.etherscan_client import EtherscanClient
+from src.clients.rpc_client import RpcClient
 from src.clis.utils import get_mapper
 from src.exporters.manager import ExportManager
-from src.extractors.block import BlockExtractor
-from src.extractors.raw_block import RawBlockExtractor
-from src.extractors.transaction import TransactionExtractor
-from src.extractors.withdrawal import WithdrawalExtractor
-from src.logger import logger
-from src.utils.enumeration import EntityType
 from src.extractors.composite import CompositeExtractor
-from src.clients.etherscan_client import EtherscanClient
+from src.logger import logger
+from src.clients.binance_client import BinanceClient
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -46,21 +41,28 @@ async def main(
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
     etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
+    binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
+    tmp = await binance_client.get_price("ETHUSDT", 1757490440000)
+    print(tmp)
 
-    extractor = CompositeExtractor(exporter=exporter, rpc_client=rpc_client, etherscan_client=etherscan_client)
+    extractor = CompositeExtractor(
+        exporter=exporter, rpc_client=rpc_client, etherscan_client=etherscan_client, binance_client = binance_client
+    )
     await extractor.run(
         start_block=start_block,
         end_block=end_block,
         process_batch_size=process_batch_size,
         request_batch_size=request_batch_size,
         entities=[
-            # "raw_block", "block", "transaction",
-            # "raw_receipt", "receipt", "log", "transfer", "account", "contract", "abi", "event",
-            "raw_trace", "trace"
+            "raw_block", "block", "transaction", "eth_price",
+            # "raw_receipt", "receipt", "log", "transfer", "account", "event", "contract", "abi", "pool", "token",
+            # "raw_trace", "trace",
         ],
     )
 
     await rpc_client.close()
+    await etherscan_client.close()
+    await binance_client.close()
 
 
 if __name__ == "__main__":
@@ -78,6 +80,6 @@ if __name__ == "__main__":
         )
     )
 
-# python -m src.clis.historical.export_blocks --start-block 23170000 --end-block 23170030 \
+# python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
 #     --process-batch-size 100 --request-batch-size 30 \
 # --entity_types raw_block,block,transaction,withdrawal --exporter_types sqlite

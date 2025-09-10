@@ -9,7 +9,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.clients.rpc_client_v2 import RpcClient
+from src.clients.rpc_client import RpcClient
 from src.schemas.python.raw_block import RawBlock
 from src.utils.enumeration import EntityType
 

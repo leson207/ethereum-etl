@@ -6,26 +6,33 @@ from src.utils.enumeration import EntityType
 from src.clients.rpc_client import RpcClient
 from src.exporters.manager import ExportManager
 from src.clients.etherscan_client import EtherscanClient
+from src.clients.binance_client import BinanceClient
 
 class CompositeExtractor:
-    def __init__(self, exporter: ExportManager, rpc_client: RpcClient, etherscan_client:EtherscanClient):
+    def __init__(self, exporter: ExportManager, rpc_client: RpcClient, etherscan_client:EtherscanClient, binance_client: BinanceClient):
         self.exporter = exporter
         self.rpc_client = rpc_client
         self.etherscan_client = etherscan_client
+        self.binance_client = binance_client
 
         self.mapping = {
             EntityType.RAW_BLOCK: self._extract_raw_block,
             EntityType.BLOCK: self._extract_block,
             EntityType.TRANSACTION: self._extract_transaction,
             EntityType.WITHDRAWAL: self._extract_withdrawal,
+            EntityType.ETH_PRICE: self._extract_eth_price,
+
             EntityType.RAW_RECEIPT: self._extract_raw_receipt,
             EntityType.RECEIPT: self._extract_receipt,
             EntityType.LOG: self._extract_log,
             EntityType.TRANSFER: self._extract_transfer,
+            EntityType.EVENT: self._extract_event,
             EntityType.ACCOUNT: self._extract_account,
             EntityType.CONTRACT: self._extract_contract,
             EntityType.ABI: self._extract_abi,
-            EntityType.EVENT: self._extract_event,
+            EntityType.POOL: self._extract_pool,
+            EntityType.TOKEN: self._extract_token,
+
             EntityType.RAW_TRACE: self._extract_raw_trace,
             EntityType.TRACE: self._extract_trace
         }
@@ -114,6 +121,21 @@ class CompositeExtractor:
             batch_size=1,
             show_progress=True,
         )
+    
+    async def _extract_eth_price(self, params):
+        from src.extractors.eth_price import EthPriceExtractor
+
+        timestamps=[block["timestamp"]*1000 for block in self.exporter[EntityType.BLOCK]]
+        eth_price_extractor = EthPriceExtractor(
+            exporter=self.exporter, client=self.binance_client
+        )
+        await eth_price_extractor.run(
+            timestamps=timestamps,
+            initial=params.batch_start_block - params.start_block,
+            total=params.end_block - params.start_block + 1,
+            batch_size=1,
+            show_progress=True,
+        )
 
     async def _extract_raw_receipt(self, params):
         from src.extractors.raw_receipt import RawReceiptExtractor
@@ -174,6 +196,30 @@ class CompositeExtractor:
             show_progress=True,
         )
     
+    def _extract_uniswap_v2_event(self, params):
+        from src.extractors.uniswap_v2_event import UniswapV2EventExtractor
+
+        uniswap_v2_event_extractor = UniswapV2EventExtractor(exporter=self.exporter)
+        uniswap_v2_event_extractor.run(
+            self.exporter[EntityType.LOG],
+            batch_size=1,
+            show_progress=True,
+        )
+    
+    def _extract_uniswap_v3_event(self, params):
+        from src.extractors.uniswap_v3_event import UniswapV3EventExtractor
+
+        uniswap_v3_event_extractor = UniswapV3EventExtractor(exporter=self.exporter)
+        uniswap_v3_event_extractor.run(
+            self.exporter[EntityType.LOG],
+            batch_size=1,
+            show_progress=True,
+        )
+    
+    def _extract_event(self, params):
+        self._extract_uniswap_v2_event(params=params)
+        self._extract_uniswap_v3_event(params=params)
+    
     def _extract_account(self, params):
         from src.extractors.account import AccountExtractor
 
@@ -216,30 +262,40 @@ class CompositeExtractor:
             batch_size=1,
             show_progress=True,
         )
-    
-    def _extract_uniswap_v2_event(self, params):
-        from src.extractors.uniswap_v2_event import UniswapV2EventExtractor
 
-        uniswap_v2_event_extractor = UniswapV2EventExtractor(exporter=self.exporter)
-        uniswap_v2_event_extractor.run(
-            self.exporter[EntityType.LOG],
-            batch_size=1,
+    async def _extract_pool(self, params):
+        from src.extractors.pool import PoolExtractor
+
+        contract_addresses = [contract['address'] for contract in self.exporter[EntityType.CONTRACT]]
+        pool_extractor = PoolExtractor(exporter=self.exporter, client=self.rpc_client) # TODO: rewatch here
+        await pool_extractor.run(
+            contract_addresses,
+            batch_size=10,
             show_progress=True,
         )
     
-    def _extract_uniswap_v3_event(self, params):
-        from src.extractors.uniswap_v3_event import UniswapV3EventExtractor
+    async def _extract_token(self, params):
+        from src.extractors.token import TokenExtractor
 
-        uniswap_v3_event_extractor = UniswapV3EventExtractor(exporter=self.exporter)
-        uniswap_v3_event_extractor.run(
-            self.exporter[EntityType.LOG],
-            batch_size=1,
+        token_addresses = [
+            addr
+            for pool in self.exporter[EntityType.POOL]
+            for addr in (pool["token0_address"], pool["token1_address"])
+        ]
+        # for pool in exporter[EntityType.POOL]:
+        #     if "0x000000000000000000000000a250cc729bb3323e" in pool["token0_address"].lower():
+        #         print('8'*100)
+        #         print(pool)
+            
+        #     if "0x000000000000000000000000a250cc729bb3323e" in pool["token1_address"].lower():
+        #         print('8'*100)
+        #         print(pool)
+        token_extractor = TokenExtractor(exporter=self.exporter, client=self.rpc_client) # TODO: rewatch here
+        await token_extractor.run(
+            token_addresses,
+            batch_size=5,
             show_progress=True,
         )
-    
-    def _extract_event(self, params):
-        self._extract_uniswap_v2_event(params=params)
-        self._extract_uniswap_v3_event(params=params)
     
     async def _extract_raw_trace(self, params):
         from src.extractors.raw_trace import RawTraceExtractor

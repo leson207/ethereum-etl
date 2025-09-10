@@ -10,7 +10,7 @@ from rich.progress import (
 )
 
 from src.abis.function import FUNCTION_HEX_SIGNATURES
-from src.clients.rpc_client import RpcClient
+from clients.rpc_client import RpcClient
 from src.schemas.python.token import Token
 from src.utils.enumeration import EntityType
 
@@ -57,39 +57,36 @@ class TokenExtractor:
                 self.exporter.add_items(EntityType.TOKEN, result)
 
     async def _run(self, progress, task, input, input_size):
-        calls = self._form_call(input)
-        responses = await self.client.send(calls)
-        res = self.extract(calls, responses)
+        param_sets = self._form_param_set(input)
+        responses = await self.client.eth_call(param_sets=param_sets)
+        res = self.extract(param_sets, responses)
         progress.update(task, advance=input_size)
         return res
 
-    def _form_call(self, contract_addresses):
-        calls = []
+    def _form_param_set(self, contract_addresses):
+        param_sets = []
         for contract_address in contract_addresses:
             for func in ["name", "symbol", "decimals", "totalSupply"]:
-                call = (
-                    "eth_call",
-                    [
+                param_set = [
                         {
                             "to": "0x"+contract_address.lower()[-40:],
                             "data": FUNCTION_HEX_SIGNATURES["erc20"][func],
                         }
-                    ],
-                )
-                calls.append(call)
+                    ]
+                param_sets.append(param_set)
 
-        return calls
+        return param_sets
 
-    def extract(self, calls, responses):
+    def extract(self, param_sets, responses):
         tokens = []
         for i in range(0, len(responses), 4):
-            call = calls[i]
+            param_set = param_sets[i]
             name, symbol, decimals, total_suplly = responses[i : i + 4]
             if "error" in name:
                 continue
 
             # token = Token(
-            #     address=call[1][0]["to"],
+            #     address=param_set[0]["to"],
             #     name=name["result"],
             #     symbol=symbol["result"],
             #     decimals=decimals["result"],
@@ -98,7 +95,7 @@ class TokenExtractor:
             # tokens.append(token)
             try:
                 token = Token(
-                    address=call[1][0]["to"],
+                    address=param_set[0]["to"],
                     name=name["result"],
                     symbol=symbol["result"],
                     decimals=decimals["result"],
@@ -106,7 +103,7 @@ class TokenExtractor:
                 )
                 tokens.append(token)
             except Exception:
-                print(call[1][0]["to"])
+                print(param_set[0]["to"])
                 continue
 
         return tokens

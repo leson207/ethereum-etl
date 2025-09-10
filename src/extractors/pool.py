@@ -10,7 +10,7 @@ from rich.progress import (
 )
 
 from src.abis.function import FUNCTION_HEX_SIGNATURES
-from src.clients.rpc_client import RpcClient
+from clients.rpc_client import RpcClient
 from src.schemas.python.pool import Pool
 from src.utils.enumeration import EntityType
 
@@ -57,39 +57,36 @@ class PoolExtractor:
                 self.exporter.add_items(EntityType.POOL, result)
 
     async def _run(self, progress, task, input, input_size):
-        calls = self._form_call(input)
-        responses = await self.client.send(calls)
-        res = self.extract(calls, responses)
+        param_sets = self._form_param_set(input)
+        responses = await self.client.eth_call(param_sets=param_sets)
+        res = self.extract(param_sets, responses)
         progress.update(task, advance=input_size)
         return res
 
-    def _form_call(self, contract_addresses):
-        calls = []
+    def _form_param_set(self, contract_addresses):
+        param_sets = []
         for contract_address in contract_addresses:
             for func in ["token0", "token1"]:
-                call = (
-                    "eth_call",
-                    [
+                param_set = [
                         {
                             "to": contract_address.lower()[:42],
                             "data": FUNCTION_HEX_SIGNATURES["erc20"][func],
                         }
-                    ],
-                )
-                calls.append(call)
+                    ]
+                param_sets.append(param_set)
 
-        return calls
+        return param_sets
 
-    def extract(self, calls, responses):
+    def extract(self, param_sets, responses):
         pools = []
         for i in range(0, len(responses), 2):
-            call = calls[i]
+            param_set = param_sets[i]
             token0, token1 = responses[i : i + 2]
             if "error" in token0:
                 continue
             
             pool = Pool(
-                pool_address=call[1][0]["to"],
+                pool_address=param_set[0]["to"],
                 token0_address=token0["result"],
                 token1_address=token1["result"]
             )
