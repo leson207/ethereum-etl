@@ -25,6 +25,7 @@ class BaseRepository:
 
         # self.db.execute(text("PRAGMA enable_progress_bar;"))
         self.db.execute(text("PRAGMA enable_optimizer;"))
+        self.db.execute(text("PRAGMA journal_mode=WAL;"))
 
     def inspect(self):
         # Show existing tables

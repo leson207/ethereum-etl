@@ -34,6 +34,9 @@ class BaseSchema(BaseModel):
             return val
         if val is None or isinstance(val, int):
             return val
+        # if val=="0x":
+        #     return 0
+        
         try:
             return int(val, 16)
         except Exception as e:

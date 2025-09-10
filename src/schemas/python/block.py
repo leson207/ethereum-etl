@@ -25,8 +25,6 @@ class Block(BaseSchema):
     timestamp: int
     uncles: Optional[list]
 
-    transaction_count: int
-
     base_fee_per_gas: Optional[int]
     withdrawals_root: Optional[str]
     withdrawal_count: int

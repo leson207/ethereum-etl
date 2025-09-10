@@ -2,6 +2,7 @@ import itertools
 
 from src.fetchers.json_client import JsonClient
 from src.fetchers.throttler import Throttler
+from src.utils.common import dump_json
 
 
 class RPCClient(JsonClient):

@@ -7,11 +7,11 @@ class PoolService:
         self.client = client
 
     async def get_token0_address(self, pool_address, erc="erc20"):
-        data = (
-            "eth_call",
-            [{"to": pool_address, "data": FUNCTION_HEX_SIGNATURES[erc]["token0"]}],
-        )
-        res = await self.client.send_single_request(data)
+        method="eth_call"
+        params=[{"to": pool_address[:42], "data": FUNCTION_HEX_SIGNATURES[erc]["token0"][:10]}, "latest"]
+        res = await self.client.send_single_request(method, params)
+        print(res)
+        print(params)
         res = decode_function_output(erc, "token0", res["result"])
         return res["token_address"]
 

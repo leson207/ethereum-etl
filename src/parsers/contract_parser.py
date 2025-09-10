@@ -5,7 +5,7 @@ from src.fetchers.contract_fetcher import ContractFetcher
 class ContractParser:
     def __init__(self, exporter: ExportManager):
         self.exporter = exporter
-        self.client = ContractFetcher(exporter)
+        self.fetcher = ContractFetcher(exporter)
 
     async def parse(
         self,
@@ -22,7 +22,7 @@ class ContractParser:
                 contract_addresses.extend(contracts)
 
         contract_addresses = list(set(contract_addresses))
-        await self.client.run(contract_addresses, show_progress=show_progress)
+        await self.fetcher.run(contract_addresses, show_progress=show_progress)
 
     def _parse(self, item: dict):
         contract_address = []

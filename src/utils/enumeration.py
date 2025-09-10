@@ -10,6 +10,8 @@ class EntityType:
     TRANSFER = "transfer"
     CONTRACT_ADDRESS = "contract_address"
     ACCOUNT_ADDRESS = "account_address"
+    POOL = "pool"
+    TOKEN = "token"
     ABI = "abi"
 
     EVENT = "event"
