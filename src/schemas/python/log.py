@@ -22,4 +22,4 @@ class Log(BaseSchema):
         "log_index",
     )
 
-    _address_fields = ()
+    _address_fields = ("address",)

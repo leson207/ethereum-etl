@@ -126,7 +126,7 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             batch_size=1,
             show_progress=True,
         )
-        abi_strings = [contract['abi'] for contract in exporter[EntityType.CONTRACT_ADDRESS]]
+        abi_strings = [contract['abi'] for contract in exporter[EntityType.CONTRACT]]
         abi_extractor.run(
             abi_strings,
             initial=0,
@@ -145,7 +145,7 @@ async def main(start_block, end_block, process_batch_size, request_batch_size, e
             show_progress=True
         )
 
-        contract_addresses = [contract['address'] for contract in exporter[EntityType.CONTRACT_ADDRESS]]
+        contract_addresses = [contract['address'] for contract in exporter[EntityType.CONTRACT]]
         await pool_extractor.run(
             contract_addresses,
             batch_size=10,

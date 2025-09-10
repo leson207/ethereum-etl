@@ -8,12 +8,11 @@ class EntityType:
     RECEIPT = "receipt"
     LOG = "log"
     TRANSFER = "transfer"
-    CONTRACT_ADDRESS = "contract_address"
-    ACCOUNT_ADDRESS = "account_address"
+    CONTRACT = "contract"
+    ACCOUNT = "account"
     POOL = "pool"
     TOKEN = "token"
     ABI = "abi"
-
     EVENT = "event"
 
     RAW_TRACE = "raw_trace"

@@ -37,6 +37,14 @@ class RpcClient:
             "params": params,
         }
 
+    async def get_web3_client_version(self):
+        requests = [self.form_request("web3_clientVersion", [])]
+        payload = orjson.dumps(requests)
+        responses = await self.post(payload)
+
+        responses = orjson.loads(responses.content)
+        return responses
+
     async def eth_call(self, param_sets):
         requests = [self.form_request("eth_call", params) for params in param_sets]
         payload = orjson.dumps(requests)
@@ -45,7 +53,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_blocks_by_number(self, block_numbers, include_transaction):
+    async def get_block_by_number(self, block_numbers, include_transaction):
         param_sets = [
             [hex(block_number), include_transaction] for block_number in block_numbers
         ]
@@ -58,7 +66,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_receipts_by_block_number(self, block_numbers):
+    async def get_receipt_by_block_number(self, block_numbers):
         param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [
             self.form_request("eth_getBlockReceipts", params) for params in param_sets
@@ -69,10 +77,8 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_traces_by_block_number(self, block_numbers, include_transaction):
-        param_sets = [
-            [hex(block_number), include_transaction] for block_number in block_numbers
-        ]
+    async def get_trace_by_block_number(self, block_numbers):
+        param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [self.form_request("trace_block", params) for params in param_sets]
         payload = orjson.dumps(requests)
         responses = await self.post(payload)

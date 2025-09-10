@@ -63,7 +63,7 @@ class ContractExtractor:
                 if result is None:
                     continue
 
-                self.exporter.add_item(EntityType.CONTRACT_ADDRESS, result.model_dump())
+                self.exporter.add_item(EntityType.CONTRACT, result.model_dump())
 
     async def _run(self, progress, task, input, input_size):
         res = await self.extract(input)

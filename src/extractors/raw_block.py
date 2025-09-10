@@ -9,7 +9,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.clients.rpc_client import RpcClient
+from src.clients.rpc_client_v2 import RpcClient
 from src.schemas.python.raw_block import RawBlock
 from src.utils.enumeration import EntityType
 
@@ -58,28 +58,19 @@ class RawBlockExtractor:
                 self.exporter.add_items(EntityType.RAW_BLOCK, result)
 
     async def _run(self, progress, task, input, input_size):
-        requests = self._form_call(input)
-        responses = await self.client.send(requests)
-        res = self.extract(requests, responses)
+        responses = await self.client.get_block_by_number(
+            block_numbers=input, include_transaction=True
+        )
+        res = self.extract(input, responses)
         progress.update(task, advance=input_size)
         return res
-
-    def _form_call(self, block_numbers):
-        calls = [
-            (
-                "eth_getBlockByNumber",
-                [hex(block_number), True],
-            )
-            for block_number in block_numbers
-        ]
-        return calls
 
     def extract(self, inputs, responses):
         raws = []
         for input, response in zip(inputs, responses):
             raw = RawBlock(
-                block_number=int(input[1][0], 16),
-                included_transaction=input[1][1],
+                block_number=input,
+                included_transaction=True,
                 data=response["result"],
             )
             raws.append(raw)

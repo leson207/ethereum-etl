@@ -10,11 +10,11 @@ from rich.progress import (
 )
 
 from src.clients.rpc_client_v2 import RpcClient
-from src.schemas.python.raw_receipt import RawReceipt
+from src.schemas.python.raw_trace import RawTrace
 from src.utils.enumeration import EntityType
 
 
-class RawReceiptExtractor:
+class RawTraceExtractor:
     def __init__(self, exporter, client: RpcClient):
         self.exporter = exporter
         self.client = client
@@ -36,7 +36,7 @@ class RawReceiptExtractor:
             disable=not show_progress,
         ) as progress:
             task = progress.add_task(
-                description="Raw Receipt: ",
+                description="Raw Trace: ",
                 total=(total or len(block_numbers)),
                 completed=(initial or 0),
             )
@@ -55,10 +55,10 @@ class RawReceiptExtractor:
                     continue
 
                 result = [i.model_dump() for i in result]
-                self.exporter.add_items(EntityType.RAW_RECEIPT, result)
+                self.exporter.add_items(EntityType.RAW_TRACE, result)
 
     async def _run(self, progress, task, input, input_size):
-        responses = await self.client.get_receipt_by_block_number(block_numbers=input)
+        responses = await self.client.get_trace_by_block_number(block_numbers=input)
         res = self.extract(input, responses)
         progress.update(task, advance=input_size)
         return res
@@ -66,7 +66,7 @@ class RawReceiptExtractor:
     def extract(self, inputs, responses):
         raws = []
         for input, response in zip(inputs, responses):
-            raw = RawReceipt(
+            raw = RawTrace(
                 block_number=input,
                 data=response["result"],
             )

@@ -3,7 +3,8 @@ import asyncio
 
 import uvloop
 
-from src.clients.rpc_client import RpcClient
+# from src.clients.rpc_client import RpcClient
+from src.clients.rpc_client_v2 import RpcClient
 from src.clis.utils import get_mapper
 from src.exporters.manager import ExportManager
 from src.extractors.block import BlockExtractor
@@ -12,6 +13,8 @@ from src.extractors.transaction import TransactionExtractor
 from src.extractors.withdrawal import WithdrawalExtractor
 from src.logger import logger
 from src.utils.enumeration import EntityType
+from src.extractors.composite import CompositeExtractor
+from src.clients.etherscan_client import EtherscanClient
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -38,62 +41,26 @@ async def main(
     mapper = get_mapper(entity_types, exporter_types)
     exporter = ExportManager(mapper)
 
-    client = RpcClient("https://eth-pokt.nodies.app")
-    res = await client.send([("web3_clientVersion", [])])
+    rpc_client = RpcClient("https://eth-pokt.nodies.app")
+    res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    raw_block_extractor = RawBlockExtractor(exporter=exporter, client=client)
-    block_extractor = BlockExtractor(exporter=exporter)
-    transaction_extractor = TransactionExtractor(exporter=exporter)
-    withdrawal_extractor = WithdrawalExtractor(exporter=exporter)
+    etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
 
-    for batch_start_block in range(start_block, end_block + 1, process_batch_size):
-        batch_end_block = min(batch_start_block + process_batch_size, end_block + 1)
+    extractor = CompositeExtractor(exporter=exporter, rpc_client=rpc_client, etherscan_client=etherscan_client)
+    await extractor.run(
+        start_block=start_block,
+        end_block=end_block,
+        process_batch_size=process_batch_size,
+        request_batch_size=request_batch_size,
+        entities=[
+            # "raw_block", "block", "transaction",
+            # "raw_receipt", "receipt", "log", "transfer", "account", "contract", "abi", "event",
+            "raw_trace", "trace"
+        ],
+    )
 
-        await raw_block_extractor.run(
-            block_numbers=range(batch_start_block, batch_end_block),
-            initial=batch_start_block - start_block,
-            total=end_block - start_block + 1,
-            batch_size=request_batch_size,
-            show_progress=True,
-        )
-
-        raw_blocks = [raw_block["data"] for raw_block in exporter[EntityType.RAW_BLOCK]]
-        block_extractor.run(
-            raw_blocks,
-            initial=batch_start_block - start_block,
-            total=end_block - start_block + 1,
-            batch_size=1,
-            show_progress=True,
-        )
-        transaction_extractor.run(
-            raw_blocks,
-            initial=batch_start_block - start_block,
-            total=end_block - start_block + 1,
-            batch_size=1,
-            show_progress=True,
-        )
-        withdrawal_extractor.run(
-            raw_blocks,
-            initial=batch_start_block - start_block,
-            total=end_block - start_block + 1,
-            batch_size=1,
-            show_progress=True,
-        )
-
-        # timestamps = [block['timestamp'] for block in exporter[EntityType.BLOCK]]
-        # await price_fetcher.run(timestamps)
-
-        logger.info(f"Block range: {batch_start_block} - {batch_end_block}")
-        logger.info(f"Num RawBlock: {len(exporter[EntityType.RAW_BLOCK])}")
-        logger.info(f"Num Block: {len(exporter[EntityType.BLOCK])}")
-        logger.info(f"Num Transaction: {len(exporter[EntityType.TRANSACTION])}")
-        logger.info(f"Num Withdrawal: {len(exporter[EntityType.WITHDRAWAL])}")
-
-        exporter.export_all()
-        exporter.clear_all()
-
-    await client.close()
+    await rpc_client.close()
 
 
 if __name__ == "__main__":
