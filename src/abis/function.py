@@ -35,6 +35,19 @@ FUNCTION_ABI = {
             "stateMutability": "view",
             "type": "function",
         },
+        "getReserves": {
+            "constant": True,
+            "inputs": [],
+            "name": "getReserves",
+            "outputs": [
+                {"name": "reserve0", "type": "uint112"},
+                {"name": "reserve1", "type": "uint112"},
+                {"name": "blockTimestampLast", "type": "uint32"},
+            ],
+            "payable": False,
+            "stateMutability": "view",
+            "type": "function",
+        },
         "name": {
             "constant": True,
             "inputs": [],

@@ -1,4 +1,4 @@
-from src.parsers.enrich import join
+from src.extractors.enrich import join
 from tqdm.std import tqdm
 from src.services.pool_service import PoolService
 from src.services.token_service import TokenService
