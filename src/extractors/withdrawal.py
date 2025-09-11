@@ -8,13 +8,9 @@ from rich.progress import (
 )
 
 from src.schemas.python.withdrawal import Withdrawal
-from src.utils.enumeration import EntityType
 
 
 class WithdrawalExtractor:
-    def __init__(self, exporter):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -37,14 +33,16 @@ class WithdrawalExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 block_number = block["number"]
                 for withdrawal in block["withdrawals"]:
                     withdrawal = self.extract(withdrawal, block_number=block_number)
-                    self.exporter.add_item(
-                        EntityType.WITHDRAWAL, [withdrawal.model_dump()]
-                    )
+                    results.append(withdrawal.model_dump())
+
                 progress.update(task, advance=batch_size)
+
+            return results
 
     def extract(self, item: dict, block_number):
         withdrawal = Withdrawal(

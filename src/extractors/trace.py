@@ -8,13 +8,9 @@ from rich.progress import (
 )
 
 from src.schemas.python.trace import Trace
-from src.utils.enumeration import EntityType
 
 
 class TraceExtractor:
-    def __init__(self, exporter):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -37,12 +33,15 @@ class TraceExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 for trace in block:
                     trace = self._extract(trace)
-                    self.exporter.add_item(EntityType.TRACE, trace.model_dump())
-
+                    results.append(trace.model_dump())
+                
                 progress.update(task, advance=batch_size)
+            
+            return results
 
     def _extract(self, item: dict):
         trace = Trace(

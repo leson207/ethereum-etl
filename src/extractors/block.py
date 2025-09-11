@@ -7,15 +7,10 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.exporters.manager import ExportManager
 from src.schemas.python.block import Block
-from src.utils.enumeration import EntityType
 
 
 class BlockExtractor:
-    def __init__(self, exporter: ExportManager):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -38,10 +33,13 @@ class BlockExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for item in items:
                 block = self.extract(item)
-                self.exporter.add_item(EntityType.BLOCK, block.model_dump())
+                results.append(block.model_dump())
                 progress.update(task, advance=batch_size)
+
+        return results
 
     def extract(self, item: dict):
         block = Block(

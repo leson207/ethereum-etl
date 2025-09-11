@@ -9,15 +9,10 @@ from rich.progress import (
 )
 
 from src.abis.utils import encode_abi_element
-from src.exporters.manager import ExportManager
 from src.schemas.python.abi import ABI
-from src.utils.enumeration import EntityType
 
 
 class AbiExtractor:
-    def __init__(self, exporter: ExportManager):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -40,11 +35,14 @@ class AbiExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for abi_string in items:
                 abis = self.extract(abi_string)
-                abis = [abi.model_dump() for abi in abis]
-                self.exporter.add_items(EntityType.ABI, abis)
+                results.extend([abi.model_dump() for abi in abis])
+
                 progress.update(task, advance=batch_size)
+            
+            return results
 
     def extract(self, abi_string: str):
         if abi_string == "Contract source code not verified":

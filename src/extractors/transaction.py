@@ -8,13 +8,9 @@ from rich.progress import (
 )
 
 from src.schemas.python.transaction import Transaction
-from src.utils.enumeration import EntityType
 
 
 class TransactionExtractor:
-    def __init__(self, exporter):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -37,13 +33,15 @@ class TransactionExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 for transaction in block["transactions"]:
                     transaction = self.extract(transaction)
-                    self.exporter.add_item(
-                        EntityType.TRANSACTION, transaction.model_dump()
-                    )
+                    results.append(transaction.model_dump())
+                
                 progress.update(task, advance=batch_size)
+
+            return results
 
     def extract(self, item: dict):
         transaction = Transaction(

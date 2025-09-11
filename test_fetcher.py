@@ -88,11 +88,25 @@ async def test_signature_fetcher():
     for i in res:
         print(i)
 
+async def test_contract_fetcher():
+    from src.clients.etherscan_client import EtherscanClient
+    from src.fetchers.contract import ContractFetcher
+
+    url = "https://api.etherscan.io/v2/api"
+    client = EtherscanClient(url)
+    fetcher = ContractFetcher(client=client)
+    res = await fetcher.run(
+        ["0xc3db44adc1fcdfd5671f555236eae49f4a8eea18"] * 10
+    )
+    for i in res:
+        print(i.keys())
+
 if __name__ == "__main__":
     # asyncio.run(test_raw_block_fetcher())
     # asyncio.run(test_raw_receipt_fetcher())
     # asyncio.run(test_raw_trace_fetcher())
-    asyncio.run(test_pool_fetcher())
+    # asyncio.run(test_pool_fetcher())
     # asyncio.run(test_token_fetcher())
     # asyncio.run(test_eth_price_fetcher())
     # asyncio.run(test_signature_fetcher())
+    asyncio.run(test_contract_fetcher())

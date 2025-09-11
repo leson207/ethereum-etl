@@ -7,15 +7,10 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.exporters.manager import ExportManager
 from src.schemas.python.log import Log
-from src.utils.enumeration import EntityType
 
 
 class LogExtractor:
-    def __init__(self, exporter: ExportManager):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -38,12 +33,16 @@ class LogExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 for receipt in block:
                     for log in receipt["logs"]:
                         log = self.extract(log)
-                        self.exporter.add_item(EntityType.LOG, log.model_dump())
+                        results.append(log.model_dump())
+
                 progress.update(task, advance=batch_size)
+            
+            return results
 
     def extract(self, item: dict):
         log = Log(

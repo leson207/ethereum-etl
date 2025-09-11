@@ -7,15 +7,10 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.exporters.manager import ExportManager
 from src.schemas.python.receipt import Receipt
-from src.utils.enumeration import EntityType
 
 
 class ReceiptExtractor:
-    def __init__(self, exporter: ExportManager):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -38,11 +33,15 @@ class ReceiptExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 for receipt in block:
                     receipt = self.extract(receipt)
-                    self.exporter.add_item(EntityType.RECEIPT, receipt.model_dump())
+                    results.append(receipt.model_dump())
+
                 progress.update(task, advance=batch_size)
+            
+            return results
 
     def extract(self, item: dict):
         receipt = Receipt(

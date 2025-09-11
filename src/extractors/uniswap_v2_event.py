@@ -9,14 +9,10 @@ from rich.progress import (
 
 from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input
 from src.schemas.python.event import Event
-from src.utils.enumeration import EntityType
 
 
 # https://ethereum.stackexchange.com/questions/12553/understanding-logs-and-log-blooms
 class UniswapV2EventExtractor:
-    def __init__(self, exporter):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -39,12 +35,15 @@ class UniswapV2EventExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for item in items:
                 event = self.extract(item)
                 if event:
-                    self.exporter.add_item(EntityType.EVENT, event.model_dump())
+                    results.append(event.model_dump())
 
                 progress.update(task, advance=batch_size)
+
+            return results
 
     def extract(self, log: dict):
         topics = log["topics"]

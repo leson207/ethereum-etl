@@ -1,25 +1,11 @@
-import asyncio
-
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
-
 from src.clients.etherscan_client import EtherscanClient
-from src.exporters.manager import ExportManager
+from src.fetchers.contract import ContractFetcher
 from src.schemas.python.contract import Contract
-from src.utils.enumeration import EntityType
 
 
-# TODO: separate collect here
 class ContractExtractor:
-    def __init__(self, exporter: ExportManager, client: EtherscanClient):
-        self.exporter = exporter
-        self.client = client
+    def __init__(self, client: EtherscanClient):
+        self.fetcher = ContractFetcher(client=client)
 
     async def run(
         self,
@@ -36,39 +22,16 @@ class ContractExtractor:
                 contract_addresses.extend(contracts)
 
         contract_addresses = list(set(contract_addresses))
+        responses = await self.fetcher.run(
+            contract_addresses=contract_addresses, show_progress=True
+        )
+        results = []
+        for address, response in zip(contract_addresses, responses):
+            contract = self.extract(address, response)
+            if contract:
+                results.append(contract.model_dump())
 
-        with Progress(
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(),
-            MofNCompleteColumn(),
-            TimeElapsedColumn(),
-            TimeRemainingColumn(),
-            disable=not show_progress,
-        ) as progress:
-            task = progress.add_task(
-                description="Contract: ",
-                total=len(contract_addresses),
-                completed=0,
-            )
-
-            tasks = []
-            for contract_address in contract_addresses:
-                atask = asyncio.create_task(
-                    self._run(progress, task, contract_address, 1)
-                )
-                tasks.append(atask)
-
-            for coro in asyncio.as_completed(tasks):
-                result = await coro
-                if result is None:
-                    continue
-
-                self.exporter.add_item(EntityType.CONTRACT, result.model_dump())
-
-    async def _run(self, progress, task, input, input_size):
-        res = await self.extract(input)
-        progress.update(task, advance=input_size)
-        return res
+        return results
 
     def collect(self, item: dict):
         contract_address = []
@@ -81,12 +44,10 @@ class ContractExtractor:
 
         return contract_address
 
-    async def extract(self, contract_address):
-        result = await self.client.get_contract_source_code(contract_address)
+    def extract(self, contract_address, result):
         if not result or result == "Invalid Address format":
             return None
 
-        
         # contract = Contract(
         #     name=result["ContractName"],
         #     address=contract_address,

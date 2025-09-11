@@ -88,47 +88,50 @@ class CompositeExtractor:
     def _extract_block(self, params):
         from src.extractors.block import BlockExtractor
 
-        block_extractor = BlockExtractor(exporter=self.exporter)
+        block_extractor = BlockExtractor()
         raw_blocks = (
             raw_block["data"] for raw_block in self.exporter[EntityType.RAW_BLOCK]
         )
-        block_extractor.run(
+        blocks = block_extractor.run(
             raw_blocks,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.BLOCK, blocks)
 
     def _extract_transaction(self, params):
         from src.extractors.transaction import TransactionExtractor
 
-        transaction_extractor = TransactionExtractor(exporter=self.exporter)
+        transaction_extractor = TransactionExtractor()
         raw_blocks = (
             raw_block["data"] for raw_block in self.exporter[EntityType.RAW_BLOCK]
         )
-        transaction_extractor.run(
+        transactions = transaction_extractor.run(
             raw_blocks,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.TRANSACTION, transactions)
 
     def _extract_withdrawal(self, params):
         from src.extractors.withdrawal import WithdrawalExtractor
 
-        withdrawal_extractor = WithdrawalExtractor(exporter=self.exporter)
+        withdrawal_extractor = WithdrawalExtractor()
         raw_blocks = (
             raw_block["data"] for raw_block in self.exporter[EntityType.RAW_BLOCK]
         )
-        withdrawal_extractor.run(
+        withdrawals = withdrawal_extractor.run(
             raw_blocks,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.WITHDRAWAL, withdrawals)
     
     async def _extract_eth_price(self, params):
         from src.fetchers.eth_price import EthPriceFetcher
@@ -170,14 +173,15 @@ class CompositeExtractor:
         raw_receipts = (
             raw_receipt["data"] for raw_receipt in self.exporter[EntityType.RAW_RECEIPT]
         )
-        receipt_extractor = ReceiptExtractor(exporter=self.exporter)
-        receipt_extractor.run(
+        receipt_extractor = ReceiptExtractor()
+        receipts = receipt_extractor.run(
             raw_receipts,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.RECEIPT, receipts)
 
     def _extract_log(self, params):
         from src.extractors.log import LogExtractor
@@ -185,14 +189,15 @@ class CompositeExtractor:
         raw_receipts = (
             raw_receipt["data"] for raw_receipt in self.exporter[EntityType.RAW_RECEIPT]
         )
-        log_extractor = LogExtractor(exporter=self.exporter)
-        log_extractor.run(
+        log_extractor = LogExtractor()
+        logs = log_extractor.run(
             raw_receipts,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.LOG , logs)
     
     def _extract_transfer(self, params):
         from src.extractors.transfer import TransferExtractor
@@ -200,34 +205,37 @@ class CompositeExtractor:
         raw_receipts = (
             raw_receipt["data"] for raw_receipt in self.exporter[EntityType.RAW_RECEIPT]
         )
-        transfer_extractor = TransferExtractor(exporter=self.exporter)
-        transfer_extractor.run(
+        transfer_extractor = TransferExtractor()
+        transfers= transfer_extractor.run(
             raw_receipts,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.TRANSFER, transfers)  
     
     def _extract_uniswap_v2_event(self, params):
         from src.extractors.uniswap_v2_event import UniswapV2EventExtractor
 
-        uniswap_v2_event_extractor = UniswapV2EventExtractor(exporter=self.exporter)
-        uniswap_v2_event_extractor.run(
+        uniswap_v2_event_extractor = UniswapV2EventExtractor()
+        events = uniswap_v2_event_extractor.run(
             self.exporter[EntityType.LOG],
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.EVENT, events)
     
     def _extract_uniswap_v3_event(self, params):
         from src.extractors.uniswap_v3_event import UniswapV3EventExtractor
 
-        uniswap_v3_event_extractor = UniswapV3EventExtractor(exporter=self.exporter)
-        uniswap_v3_event_extractor.run(
+        uniswap_v3_event_extractor = UniswapV3EventExtractor()
+        events = uniswap_v3_event_extractor.run(
             self.exporter[EntityType.LOG],
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.EVENT, events)
     
     def _extract_event(self, params):
         self._extract_uniswap_v2_event(params=params)
@@ -239,14 +247,15 @@ class CompositeExtractor:
         raw_receipts = (
             raw_receipt["data"] for raw_receipt in self.exporter[EntityType.RAW_RECEIPT]
         )
-        account_extractor = AccountExtractor(exporter=self.exporter)
-        account_extractor.run(
+        account_extractor = AccountExtractor()
+        accounts = account_extractor.run(
             raw_receipts,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.ACCOUNT, accounts)
 
     async def _extract_contract(self, params):
         from src.extractors.contract import ContractExtractor
@@ -254,27 +263,23 @@ class CompositeExtractor:
         raw_receipts = (
             raw_receipt["data"] for raw_receipt in self.exporter[EntityType.RAW_RECEIPT]
         )
-        contract_extractor = ContractExtractor(exporter=self.exporter, client=self.etherscan_client)
-        await contract_extractor.run(
-            raw_receipts,
-            initial=params.batch_start_block - params.start_block,
-            total=params.end_block - params.start_block + 1,
-            batch_size=1,
-            show_progress=True,
-        )
+        contract_extractor = ContractExtractor(client=self.etherscan_client)
+        contracts = await contract_extractor.run(raw_receipts)
+        self.exporter.add_items(EntityType.CONTRACT, contracts)
     
     async def _extract_abi(self, params):
         from src.extractors.abi import AbiExtractor
 
         abi_strings = [contract['abi'] for contract in self.exporter[EntityType.CONTRACT]]
-        abi_extractor = AbiExtractor(exporter=self.exporter)
-        abi_extractor.run(
+        abi_extractor = AbiExtractor()
+        abis = abi_extractor.run(
             abi_strings,
             initial=0,
             total=len(abi_strings),
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.ABI, abis)
 
     async def _extract_pool(self, params):
         from src.fetchers.pool import PoolFetcher
@@ -300,29 +305,6 @@ class CompositeExtractor:
             pools.append(pool)
 
         self.exporter.add_items(EntityType.POOL, pools)
-
-    async def _extract_token_legacy(self, params):
-        from src.extractors.token import TokenExtractor
-
-        token_addresses = [
-            addr
-            for pool in self.exporter[EntityType.POOL]
-            for addr in (pool["token0_address"], pool["token1_address"])
-        ]
-        # for pool in exporter[EntityType.POOL]:
-        #     if "0x000000000000000000000000a250cc729bb3323e" in pool["token0_address"].lower():
-        #         print('8'*100)
-        #         print(pool)
-            
-        #     if "0x000000000000000000000000a250cc729bb3323e" in pool["token1_address"].lower():
-        #         print('8'*100)
-        #         print(pool)
-        token_extractor = TokenExtractor(exporter=self.exporter, client=self.rpc_client) # TODO: rewatch here
-        await token_extractor.run(
-            token_addresses,
-            batch_size=5,
-            show_progress=True,
-        )
     
     async def _extract_token(self, params):
         from src.fetchers.token import TokenFetcher
@@ -383,11 +365,12 @@ class CompositeExtractor:
         raw_traces = (
             raw_trace["data"] for raw_trace in self.exporter[EntityType.RAW_TRACE]
         )
-        trace_extractor = TraceExtractor(exporter=self.exporter)
-        trace_extractor.run(
+        trace_extractor = TraceExtractor()
+        traces = trace_extractor.run(
             raw_traces,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=1,
             show_progress=True,
         )
+        self.exporter.add_items(EntityType.TRACE, traces)

@@ -8,19 +8,16 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.exporters.manager import ExportManager
 from src.schemas.python.transfer import Transfer
-from src.utils.enumeration import EntityType
 
 TRANSFER_EVENT_TEXT_SIGNATURE = "Transfer(address,address,uint256)"  # from, to, value
 TRANSFER_EVENT_HEX_SIGNATURE = to_hex(keccak(text=TRANSFER_EVENT_TEXT_SIGNATURE))
-TRANSFER_EVENT_HEX_SIGNATURE = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+TRANSFER_EVENT_HEX_SIGNATURE = (
+    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+)
 
 
 class TransferExtractor:
-    def __init__(self, exporter: ExportManager):
-        self.exporter = exporter
-
     def run(
         self,
         items: list[dict],
@@ -43,9 +40,10 @@ class TransferExtractor:
                 completed=(initial or 0),
             )
 
+            results = []
             for block in items:
                 for receipt in block:
-                    for log in receipt['logs']:
+                    for log in receipt["logs"]:
                         if (
                             len(log["topics"]) == 0
                             or log["topics"][0] != TRANSFER_EVENT_HEX_SIGNATURE
@@ -53,27 +51,30 @@ class TransferExtractor:
                             continue
 
                         transfer = self.extract(log)
-                        self.exporter.add_item(EntityType.TRANSFER, transfer.model_dump())
+                        results.append(transfer.model_dump())
+
                 progress.update(task, advance=batch_size)
+
+            return results
 
     def extract(self, item: dict):
         from_address = "0x" + item["topics"][1][-40:]
         to_address = "0x" + item["topics"][2][-40:]
-        if len(item['topics'])==4:
+        if len(item["topics"]) == 4:
             value = "0x" + item["topics"][3][-40:]
         else:
             value = item["data"]
         hex_data = item["data"][2:]
-        data = [hex_data[i:i+64] for i in range(0, len(hex_data), 64)]
+        data = [hex_data[i : i + 64] for i in range(0, len(hex_data), 64)]
 
-        if len(hex_data)%64!=0:
-            print('7'*100)
+        if len(hex_data) % 64 != 0:
+            print("7" * 100)
             print(item)
             print(len(hex_data))
             raise
 
-        if len(data)+len(item["topics"])!=4:
-            print('8'*100)
+        if len(data) + len(item["topics"]) != 4:
+            print("8" * 100)
             print(item)
             raise
 
