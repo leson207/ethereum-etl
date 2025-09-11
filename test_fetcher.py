@@ -90,9 +90,9 @@ async def test_signature_fetcher():
 
 if __name__ == "__main__":
     # asyncio.run(test_raw_block_fetcher())
-    asyncio.run(test_raw_receipt_fetcher())
-    asyncio.run(test_raw_trace_fetcher())
-    # asyncio.run(test_pool_fetcher())
+    # asyncio.run(test_raw_receipt_fetcher())
+    # asyncio.run(test_raw_trace_fetcher())
+    asyncio.run(test_pool_fetcher())
     # asyncio.run(test_token_fetcher())
     # asyncio.run(test_eth_price_fetcher())
     # asyncio.run(test_signature_fetcher())

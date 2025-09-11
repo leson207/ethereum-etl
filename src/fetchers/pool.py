@@ -48,7 +48,11 @@ class PoolFetcher:
 
                 atask = asyncio.create_task(
                     self._run(
-                        progress, task_id, results, batch, range(i, i + batch_size)
+                        progress,
+                        task_id,
+                        results,
+                        batch,
+                        range(i, min(i + batch_size, length)),
                     )
                 )
                 tasks.append(atask)
@@ -74,6 +78,7 @@ class PoolFetcher:
             start = idx * set_size
             end = start + set_size
             storage[pos] = responses[start:end]
+            # storage[pos] = [res["result"] for res in responses[start:end]]
 
         progress.update(task_id, advance=len(positions))
 

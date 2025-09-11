@@ -42,8 +42,6 @@ async def main(
 
     etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
     binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
-    tmp = await binance_client.get_price("ETHUSDT", 1757490440000)
-    print(tmp)
 
     extractor = CompositeExtractor(
         exporter=exporter, rpc_client=rpc_client, etherscan_client=etherscan_client, binance_client = binance_client
@@ -55,8 +53,8 @@ async def main(
         request_batch_size=request_batch_size,
         entities=[
             "raw_block", "block", "transaction", "eth_price",
-            # "raw_receipt", "receipt", "log", "transfer", "account", "event", "contract", "abi", "pool", "token",
-            # "raw_trace", "trace",
+            "raw_receipt", "receipt", "log", "transfer", "account", "event", "contract", "abi", "pool", "token",
+            "raw_trace", "trace",
         ],
     )
 
@@ -81,5 +79,4 @@ if __name__ == "__main__":
     )
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-#     --process-batch-size 100 --request-batch-size 30 \
-# --entity_types raw_block,block,transaction,withdrawal --exporter_types sqlite
+#     --process-batch-size 100 --request-batch-size 30

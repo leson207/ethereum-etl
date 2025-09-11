@@ -64,18 +64,26 @@ class CompositeExtractor:
             self.exporter.clear_all()
 
     async def _extract_raw_block(self, params):
-        from src.extractors.raw_block import RawBlockExtractor
+        from src.fetchers.raw_block import RawBlockFetcher
 
-        raw_block_extractor = RawBlockExtractor(
-            exporter=self.exporter, client=self.rpc_client
-        )
-        await raw_block_extractor.run(
-            block_numbers=range(params.batch_start_block, params.batch_end_block+1),
+        fetcher = RawBlockFetcher(client=self.rpc_client)
+        block_numbers = range(params.batch_start_block, params.batch_end_block+1)
+        block_data = await fetcher.run(
+            block_numbers=block_numbers,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=params.batch_size,
             show_progress=True,
         )
+        raw_blocks = [
+            {
+                "block_number" : block_number,
+                "included_transaction": True,
+                "data": data 
+            }
+            for block_number, data in zip(block_numbers, block_data)
+        ]
+        self.exporter.add_items(EntityType.RAW_BLOCK, raw_blocks)
 
     def _extract_block(self, params):
         from src.extractors.block import BlockExtractor
@@ -123,13 +131,11 @@ class CompositeExtractor:
         )
     
     async def _extract_eth_price(self, params):
-        from src.extractors.eth_price import EthPriceExtractor
+        from src.fetchers.eth_price import EthPriceFetcher
 
+        fetcher = EthPriceFetcher(client=self.binance_client)
         timestamps=[block["timestamp"]*1000 for block in self.exporter[EntityType.BLOCK]]
-        eth_price_extractor = EthPriceExtractor(
-            exporter=self.exporter, client=self.binance_client
-        )
-        await eth_price_extractor.run(
+        await fetcher.run(
             timestamps=timestamps,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
@@ -138,18 +144,25 @@ class CompositeExtractor:
         )
 
     async def _extract_raw_receipt(self, params):
-        from src.extractors.raw_receipt import RawReceiptExtractor
+        from src.fetchers.raw_receipt import RawReceiptFetcher
 
-        raw_receipt_extractor = RawReceiptExtractor(
-            exporter=self.exporter, client=self.rpc_client
-        )
-        await raw_receipt_extractor.run(
-            block_numbers=range(params.batch_start_block, params.batch_end_block+1),
+        fetcher = RawReceiptFetcher(client=self.rpc_client)
+        block_numbers = range(params.batch_start_block, params.batch_end_block+1)
+        receipt_data = await fetcher.run(
+            block_numbers=block_numbers,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=params.batch_size,
             show_progress=True,
         )
+        raw_receipts = [
+            {
+                "block_number" : block_number,
+                "data": data 
+            }
+            for block_number, data in zip(block_numbers, receipt_data)
+        ]
+        self.exporter.add_items(EntityType.RAW_RECEIPT, raw_receipts)
     
     def _extract_receipt(self, params):
         from src.extractors.receipt import ReceiptExtractor
@@ -264,17 +277,31 @@ class CompositeExtractor:
         )
 
     async def _extract_pool(self, params):
-        from src.extractors.pool import PoolExtractor
+        from src.fetchers.pool import PoolFetcher
 
+        fetcher = PoolFetcher(client=self.rpc_client)
         contract_addresses = [contract['address'] for contract in self.exporter[EntityType.CONTRACT]]
-        pool_extractor = PoolExtractor(exporter=self.exporter, client=self.rpc_client) # TODO: rewatch here
-        await pool_extractor.run(
+        pool_data = await fetcher.run(
             contract_addresses,
             batch_size=10,
             show_progress=True,
         )
-    
-    async def _extract_token(self, params):
+        pools = []
+        for address, data in zip(contract_addresses, pool_data):
+            token0, token1 = data
+            if "error" in token0:
+                continue
+            
+            pool = {
+                "pool_address": address,
+                "token0_address": token0["result"],
+                "token1_address": token1["result"]
+            }
+            pools.append(pool)
+
+        self.exporter.add_items(EntityType.POOL, pools)
+
+    async def _extract_token_legacy(self, params):
         from src.extractors.token import TokenExtractor
 
         token_addresses = [
@@ -297,19 +324,58 @@ class CompositeExtractor:
             show_progress=True,
         )
     
-    async def _extract_raw_trace(self, params):
-        from src.extractors.raw_trace import RawTraceExtractor
+    async def _extract_token(self, params):
+        from src.fetchers.token import TokenFetcher
 
-        raw_trace_extractor = RawTraceExtractor(
-            exporter=self.exporter, client=self.rpc_client
+        token_addresses = [
+            addr
+            for pool in self.exporter[EntityType.POOL]
+            for addr in (pool["token0_address"], pool["token1_address"])
+        ]
+        fetcher = TokenFetcher(client=self.rpc_client)
+        token_data = await fetcher.run(
+            token_addresses,
+            batch_size=5,
+            show_progress=True,
         )
-        await raw_trace_extractor.run(
-            block_numbers=range(params.batch_start_block, params.batch_end_block+1),
+
+        tokens = []
+        for address,data in zip(token_addresses, token_data):
+            name, symbol, decimals, total_suplly = data
+            if "error" in name:
+                continue
+
+            token = {
+                "address": address,
+                "name": name["result"],
+                "symbol": symbol["result"],
+                "decimals": decimals["result"],
+                "total_suplly": total_suplly["result"],
+            }
+            tokens.append(token)
+        
+        self.exporter.add_items(EntityType.TOKEN, tokens)
+    
+    async def _extract_raw_trace(self, params):
+        from src.fetchers.raw_trace import RawTraceFetcher
+
+        fetcher = RawTraceFetcher(client=self.rpc_client)
+        block_numbers = range(params.batch_start_block, params.batch_end_block+1)
+        trace_data = await fetcher.run(
+            block_numbers=block_numbers,
             initial=params.batch_start_block - params.start_block,
             total=params.end_block - params.start_block + 1,
             batch_size=5,
             show_progress=True,
         )
+        raw_traces = [
+            {
+                "block_number" : block_number,
+                "data": data 
+            }
+            for block_number, data in zip(block_numbers, trace_data)
+        ]
+        self.exporter.add_items(EntityType.RAW_TRACE, raw_traces)
     
     async def _extract_trace(self, params):
         from src.extractors.trace import TraceExtractor

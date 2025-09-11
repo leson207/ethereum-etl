@@ -68,7 +68,7 @@ class RawBlockFetcher:
         positions: list[int],
     ):
         responses = await self.client.get_block_by_number(
-            block_numbers=block_numbers, include_transaction=False
+            block_numbers=block_numbers, include_transaction=True
         )
         for position, response in zip(positions, responses):
             storage[position] = response["result"]
