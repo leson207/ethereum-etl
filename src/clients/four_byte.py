@@ -18,7 +18,10 @@ class FourByteClient:
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
         }
         self.client = httpx.AsyncClient(
-            headers=headers, http2=True, verify=False, timeout=timeout
+            headers=headers,
+            http2=True,
+            verify=False,
+            timeout=timeout,
         )
         self.throttler = Throttler(rate_limit=5, period=1)
 
@@ -28,22 +31,24 @@ class FourByteClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def get_signature_from_hex(self, hex_signature):
-        path = "event-signatures"
+    async def get_signature_from_hex(self, hex_signature, use_cached:bool=True):
         params = {"hex_signature": hex_signature}
-        key = f"binance_event_signatures_{params['symbol']}_{params['startTime']}"
-        result = cache_service.get(key)
-        if result:
-            return orjson.loads(result)
+        key = f"4bytes_event_signatures_{params['hex_signature']}"
+        if use_cached:
+            result = cache_service.get(key)
+            if result:
+                return orjson.loads(result)
 
-        response = await self.retry(self._get_price, path, params)
-        result = response["result"][0]
+        response = await self.retry(
+            self._get_event_signature, "/event-signatures/", params
+        )
+        result = response["results"][0]
         cache_service.set(key, orjson.dumps(result).decode("utf-8"))
         return result
 
-    async def _get_price(self, path, params):
+    async def _get_event_signature(self, path, params):
         async with self.throttler:
-            response = await self.client.get(self.url + "/" + path, params=params)
+            response = await self.client.get(self.url + path, params=params)
         response = orjson.loads(response.content)
         return response
 

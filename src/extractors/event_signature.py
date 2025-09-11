@@ -10,7 +10,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from src.clients.four_byte import FourByteClient
+from clients.four_byte import FourByteClient
 from src.utils.enumeration import EntityType
 
 

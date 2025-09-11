@@ -6,10 +6,11 @@ import orjson
 from src.clients.throttler import Throttler
 from src.logger import logger
 from src.services.cache_service import cache_service
+from src.utils.common import serialize_dict_value
 
 
 class BinanceClient:
-    def __init__(self, url, max_retries: int = 5, backoff: float = 3):
+    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
         self.url = url
 
         timeout = httpx.Timeout(timeout=60)
@@ -28,25 +29,39 @@ class BinanceClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def get_price(self, symbol, timestamp):
-        path = "aggTrades"
-        params = {"symbol": symbol, "startTime": timestamp, "limit": 1}
-        key = f"binance_{path}_{params['symbol']}_{params['startTime']}"
-        result = cache_service.get(key)
-        if result:
-            return orjson.loads(result)
+    async def agg_trades(
+        self,
+        symbol: str,
+        from_id: int = None,
+        start_time: int = None,
+        end_time: int = None,
+        limit: int = None,
+    ):
+        params = {
+            "symbol": symbol,
+            "fromId": from_id,
+            "startTime": start_time,
+            "endTime": end_time,
+            "limit": limit,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        key = "binance_agg_trades" + serialize_dict_value(params)
+        cached = cache_service.get(key)
+        if cached:
+            return orjson.loads(cached)
 
-        response = await self.retry(self._get_price, path, params)
-        result = response[0]
-        cache_service.set(key, orjson.dumps(result).decode("utf-8"))
-        return result
+        response = await self.retry(self._get_price, "/aggTrades", params)
+        cache_service.set(key, orjson.dumps(response).decode("utf-8"))
+        return response
 
     async def _get_price(self, path, params):
         async with self.throttler:
-            response = await self.client.get(self.url + "/" + path, params=params)
-        response = orjson.loads(response.content)
+            response = await self.client.get(self.url + path, params=params)
+            response = orjson.loads(response.content)
+        
         if "code" in response:
             raise Exception(f"Binance error: {response['msg']}")
+        
         return response
 
     async def retry(self, func, path, params):

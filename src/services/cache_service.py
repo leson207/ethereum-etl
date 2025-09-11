@@ -14,18 +14,19 @@ class CacheService:
         res = self.client.db.execute(text(query))
         res = res.fetchall()
         if res:
-            return res[0][1] # key, value, created_time
+            return res[0][1]  # key, value, created_time
 
         return None
 
     def set(self, key, value):
         row = [{"key": key, "value": value}]
-        self.client.insert(row)
+        self.client.insert(row, deduplicate="replace")
 
     def delete(self, key):
         query = f"DELETE FROM {self.client.table_name} WHERE key='{key}';"
         self.client.db.execute(text(query))
         self.client.db.commit()
         logger.debug(f"Delete {key} from cache!")
+
 
 cache_service = CacheService()
