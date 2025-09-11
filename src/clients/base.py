@@ -1,4 +1,5 @@
 import asyncio
+from typing import Callable
 
 import httpx
 
@@ -7,7 +8,7 @@ from src.logger import logger
 
 # Nesscessary atttribute and sample retry method
 class BaseClient:
-    def __init__(self, url, throttler, max_retries: int = 5, backoff: float = 3):
+    def __init__(self, url: str, throttler, max_retries: int = 5, backoff: float = 3):
         self.url = url
         timeout = httpx.Timeout(timeout=60)
         headers = {
@@ -25,7 +26,7 @@ class BaseClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def _get_retry(self, func, path, params):
+    async def _get_retry(self, func: Callable, path: str, params: list[dict]):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
             try:
@@ -49,7 +50,7 @@ class BaseClient:
         )
         return None
 
-    async def _post_retry(self, requests):
+    async def _post_retry(self, requests: list[dict]):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
 

@@ -54,17 +54,17 @@ class BinanceClient:
         cache_service.set(key, orjson.dumps(response).decode("utf-8"))
         return response
 
-    async def _get_price(self, path, params):
+    async def _get_price(self, path: str, params: dict):
         async with self.throttler:
             response = await self.client.get(self.url + path, params=params)
             response = orjson.loads(response.content)
-        
+
         if "code" in response:
             raise Exception(f"Binance error: {response['msg']}")
-        
+
         return response
 
-    async def retry(self, func, path, params):
+    async def retry(self, func, path: str, params: dict):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
             try:

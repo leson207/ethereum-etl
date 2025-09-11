@@ -5,11 +5,12 @@ import orjson
 
 from src.clients.throttler import Throttler
 from src.logger import logger
+from typing import Callable
 from src.services.cache_service import cache_service
 
 
 class FourByteClient:
-    def __init__(self, url, max_retries: int = 5, backoff: float = 3):
+    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
         self.url = url
 
         timeout = httpx.Timeout(timeout=60)
@@ -31,8 +32,9 @@ class FourByteClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def get_signature_from_hex(self, hex_signature, use_cached:bool=True):
+    async def get_signature_from_hex(self, hex_signature: str, use_cached: bool = True):
         params = {"hex_signature": hex_signature}
+
         key = f"4bytes_event_signatures_{params['hex_signature']}"
         if use_cached:
             result = cache_service.get(key)
@@ -44,15 +46,17 @@ class FourByteClient:
         )
         result = response["results"][0]
         cache_service.set(key, orjson.dumps(result).decode("utf-8"))
+
         return result
 
-    async def _get_event_signature(self, path, params):
+    async def _get_event_signature(self, path: str, params: dict):
         async with self.throttler:
             response = await self.client.get(self.url + path, params=params)
+
         response = orjson.loads(response.content)
         return response
 
-    async def retry(self, func, path, params):
+    async def retry(self, func: Callable, path: str, params: dict):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
             try:

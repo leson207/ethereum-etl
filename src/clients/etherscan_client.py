@@ -1,4 +1,5 @@
 import asyncio
+from typing import Callable
 
 import httpx
 import orjson
@@ -10,7 +11,7 @@ from src.services.cache_service import cache_service
 
 # Error in response so each request function must have it corresponding retry
 class EtherscanClient:
-    def __init__(self, url, max_retries: int = 5, backoff: float = 3):
+    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
         self.url = url
         self.chain_id = 1
         self.api_key = "2VY1QY3DNZDXDEMSCZFCW6HDVW3A3TEVFF"
@@ -31,7 +32,7 @@ class EtherscanClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    async def get_contract_source_code(self, contract_address):
+    async def get_contract_source_code(self, contract_address: str):
         params = {
             "module": "contract",
             "action": "getsourcecode",
@@ -61,7 +62,7 @@ class EtherscanClient:
             raise Exception(f"Etherscan error: {response['result']}")
         return response
 
-    async def retry(self, func, params):
+    async def retry(self, func: Callable, params: dict):
         full_params = params | {"chainid": self.chain_id, "apikey": self.api_key}
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()

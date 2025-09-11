@@ -9,7 +9,7 @@ from src.logger import logger
 
 
 class RpcClient:
-    def __init__(self, uri, max_retries: int = 5, backoff: float = 3):
+    def __init__(self, uri: str, max_retries: int = 5, backoff: float = 3):
         self.uri = uri
         timeout = httpx.Timeout(timeout=60)
         headers = {
@@ -28,7 +28,7 @@ class RpcClient:
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
 
-    def form_request(self, method, params):
+    def form_request(self, method: str, params: list):
         request_id = next(self.request_counter)
         return {
             "id": request_id,
@@ -45,7 +45,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return responses
 
-    async def eth_call(self, param_sets):
+    async def eth_call(self, param_sets: list[list]):
         requests = [self.form_request("eth_call", params) for params in param_sets]
         payload = orjson.dumps(requests)
         responses = await self.post(payload)
@@ -53,7 +53,9 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_block_by_number(self, block_numbers, include_transaction):
+    async def get_block_by_number(
+        self, block_numbers: list[int], include_transaction: bool
+    ):
         param_sets = [
             [hex(block_number), include_transaction] for block_number in block_numbers
         ]
@@ -66,7 +68,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_receipt_by_block_number(self, block_numbers):
+    async def get_receipt_by_block_number(self, block_numbers: list[int]):
         param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [
             self.form_request("eth_getBlockReceipts", params) for params in param_sets
@@ -77,7 +79,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def get_trace_by_block_number(self, block_numbers):
+    async def get_trace_by_block_number(self, block_numbers: list[int]):
         param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [self.form_request("trace_block", params) for params in param_sets]
         payload = orjson.dumps(requests)
@@ -86,7 +88,7 @@ class RpcClient:
         responses = orjson.loads(responses.content)
         return sorted(responses, key=lambda response: response["id"])
 
-    async def post(self, payload):
+    async def post(self, payload: str):
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
 
