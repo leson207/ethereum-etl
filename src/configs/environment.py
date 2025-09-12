@@ -13,13 +13,17 @@ def get_env_filename():
 
 
 class EnvironmentSettings(BaseSettings):
-    DATABASE_DIALECT: str
     CLICKHOUSE_SERVER: str
     CLICKHOUSE_USERNAME: str
     CLICKHOUSE_PASSWORD:str
     DATABASE_NAME: str = Field(default_factory=str)
 
     KAFKA_SERVER: str
+
+    PROVIER_URIS: list
+    WEBSOCKET_URL: str
+
+    ETHERSCAN_API_KEY: str
 
     ENVIRONMENT_NAME: str
     DEBUG_MODE: bool

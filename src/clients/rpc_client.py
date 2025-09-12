@@ -9,8 +9,8 @@ from src.logger import logger
 
 
 class RpcClient:
-    def __init__(self, uri: str, max_retries: int = 5, backoff: float = 3):
-        self.uri = uri
+    def __init__(self, uris: list[str], max_retries: int = 5, backoff: float = 3):
+        self.uris = uris
         timeout = httpx.Timeout(timeout=60)
         headers = {
             "Content-Type": "application/json",
@@ -27,6 +27,10 @@ class RpcClient:
         self._lock = asyncio.Lock()
         self._backoff_event = asyncio.Event()
         self._backoff_event.set()
+
+    def pick_uri(self, attempt: int):
+        idx = (attempt - 1) % len(self.uris)
+        return self.uris[idx]
 
     def form_request(self, method: str, params: list):
         request_id = next(self.request_counter)
@@ -113,9 +117,9 @@ class RpcClient:
         )
         return None
 
-    async def _post(self, payload):
+    async def _post(self, payload: str, attempt: int = 1):
         async with self.throttler:
-            responses = await self.client.post(self.uri, content=payload)
+            responses = await self.client.post(self.pick_uri(attempt), content=payload)
 
         return responses
 

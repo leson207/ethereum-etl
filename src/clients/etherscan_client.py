@@ -5,6 +5,7 @@ import httpx
 import orjson
 
 from src.clients.throttler import Throttler
+from src.configs.environment import env
 from src.logger import logger
 from src.services.cache_service import cache_service
 
@@ -14,7 +15,7 @@ class EtherscanClient:
     def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
         self.url = url
         self.chain_id = 1
-        self.api_key = "2VY1QY3DNZDXDEMSCZFCW6HDVW3A3TEVFF"
+        self.api_key = env.ETHERSCAN_API_KEY
 
         timeout = httpx.Timeout(timeout=60)
         headers = {

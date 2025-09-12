@@ -5,12 +5,12 @@ import uvloop
 
 from src.clients.etherscan_client import EtherscanClient
 from src.clients.rpc_client import RpcClient
-from src.clis.utils import get_mapper
+from src.exporters.utils import get_mapper
 from src.exporters.manager import ExportManager
 from src.extractors.composite import CompositeExtractor
 from src.logger import logger
 from src.clients.binance_client import BinanceClient
-
+from src.configs.environment import env
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
@@ -36,7 +36,7 @@ async def main(
     mapper = get_mapper(entity_types, exporter_types)
     exporter = ExportManager(mapper)
 
-    rpc_client = RpcClient("https://eth-pokt.nodies.app")
+    rpc_client = RpcClient(env.PROVIER_URIS)
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
