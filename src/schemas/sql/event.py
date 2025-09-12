@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric
+from sqlalchemy import Column, Integer, String, Numeric, Float
 from src.schemas.sql.base import EntityMeta
 
 
@@ -15,3 +15,17 @@ class Event(EntityMeta):
     transaction_hash = Column(String, primary_key=True)
     log_index = Column(Integer, primary_key=True)
     block_number = Column(Integer, primary_key=True)
+
+    # Those field below add using enrich
+    block_timestamp = Column(Integer)
+    eth_price = Column(Float)
+
+    token0_address = Column(String)
+    token0_name = Column(String)
+    token0_symbol = Column(String)
+    token0_decimals = Column(String)
+
+    token1_address = Column(String)
+    token1_name = Column(String)
+    token1_symbol = Column(String)
+    token1_decimals = Column(String)

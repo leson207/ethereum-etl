@@ -3,7 +3,6 @@ class EntityType:
     BLOCK = "block"
     TRANSACTION = "transaction"
     WITHDRAWAL = "withdrawal"
-    ETH_PRICE = "eth_price"
 
     RAW_RECEIPT = "raw_receipt"
     RECEIPT = "receipt"

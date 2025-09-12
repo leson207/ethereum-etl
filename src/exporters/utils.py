@@ -23,7 +23,7 @@ def resolve_dependency(target_entity_types):
         EntityType.RECEIPT: [EntityType.RAW_RECEIPT],
         EntityType.LOG: [EntityType.RAW_RECEIPT],
         EntityType.TRANSFER: [EntityType.LOG],
-        EntityType.EVENT: [EntityType.RECEIPT],
+        EntityType.EVENT: [EntityType.LOG, EntityType.BLOCK, EntityType.POOL, EntityType.TOKEN],
         EntityType.ACCOUNT: [EntityType.RECEIPT],
         EntityType.CONTRACT: [EntityType.RECEIPT],
         EntityType.ABI: [EntityType.CONTRACT],

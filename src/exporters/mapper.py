@@ -61,6 +61,10 @@ class EntityExporterMapper:
                 from src.repositories.sqlite.account import AccountRepository
 
                 return AccountRepository()
+            case EntityType.CONTRACT:
+                from src.repositories.sqlite.contract import ContractRepository
+
+                return ContractRepository()
             case EntityType.ABI:
                 from src.repositories.sqlite.abi import AbiRepository
 

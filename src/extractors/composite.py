@@ -26,7 +26,7 @@ class CompositeExtractor:
             EntityType.BLOCK: self._extract_block,
             EntityType.TRANSACTION: self._extract_transaction,
             EntityType.WITHDRAWAL: self._extract_withdrawal,
-            EntityType.ETH_PRICE: self._extract_eth_price,
+            # EntityType.ETH_PRICE: self._extract_eth_price,
 
             EntityType.RAW_RECEIPT: self._extract_raw_receipt,
             EntityType.RECEIPT: self._extract_receipt,
@@ -49,8 +49,12 @@ class CompositeExtractor:
         for batch_start_block in range(start_block, end_block + 1, process_batch_size):
             batch_end_block = min(batch_start_block + process_batch_size, end_block)
 
-            for entity_types in self.require_entity_types:
-                extract_fn = self.mapping[entity_types]
+            # processing order follow mapping order
+            for entity_type in self.mapping:
+                if entity_type not in self.require_entity_types:
+                    continue
+
+                extract_fn = self.mapping[entity_type]
                 params = SimpleNamespace(
                     start_block=start_block,
                     end_block=end_block,
@@ -61,13 +65,28 @@ class CompositeExtractor:
                 result = extract_fn(params)
                 if inspect.isawaitable(result):
                     await result
+            
+            await self._enrich()
 
             logger.info(f"Block range: {batch_start_block} - {batch_end_block}")
-            for entity_types in self.require_entity_types:
-                logger.info(f"Num {entity_types}: {len(self.exporter[entity_types])}")
+            for entity_type in self.mapping:
+                if entity_type in self.require_entity_types:
+                    logger.info(f"Num {entity_type}: {len(self.exporter[entity_type])}")
 
             self.exporter.exports(self.target_entity_types)
             self.exporter.clear_all()
+
+    async def _enrich(self):
+        from src.extractors.enrich import enrich_event
+        enriched_event = await enrich_event(
+            self.exporter[EntityType.EVENT],
+            self.exporter[EntityType.BLOCK],
+            self.exporter[EntityType.POOL],
+            self.exporter[EntityType.TOKEN],
+            self.binance_client
+        )
+        self.exporter.clear(EntityType.EVENT)
+        self.exporter.add_items(EntityType.EVENT, enriched_event)
 
     async def _extract_raw_block(self, params):
         from src.fetchers.raw_block import RawBlockFetcher
@@ -292,6 +311,7 @@ class CompositeExtractor:
 
         fetcher = PoolFetcher(client=self.rpc_client)
         contract_addresses = [contract['address'] for contract in self.exporter[EntityType.CONTRACT]]
+        contract_addresses = list(set(contract_addresses))
         pool_data = await fetcher.run(
             contract_addresses,
             batch_size=10,
@@ -320,6 +340,7 @@ class CompositeExtractor:
             for pool in self.exporter[EntityType.POOL]
             for addr in (pool["token0_address"], pool["token1_address"])
         ]
+        token_addresses = list(set(token_addresses))
         fetcher = TokenFetcher(client=self.rpc_client)
         token_data = await fetcher.run(
             token_addresses,

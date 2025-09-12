@@ -1,27 +1,26 @@
+import duckdb
+import pandas as pd
 import polars as pl
 
-# TODO: check field of those join later
 
-
-def join(
+def polars_join(
     left, right, left_on, right_on, left_fields: list, right_fields: list, how="left"
 ):
     def select_and_rename(data, fields):
         df = pl.from_dicts(data, infer_schema_length=None)
-        select_cols = []
-        rename_map = {}
+        if "*" in fields:
+            select_cols = df.columns
+        else:
+            select_cols = [f[0] if isinstance(f, tuple) else f for f in fields]
 
-        for f in fields:
-            if isinstance(f, tuple):
-                src, dst = f
-                select_cols.append(src)
-                rename_map[src] = dst
-            else:
-                select_cols.append(f)
+        rename_map = {
+            src: dst for f in fields if isinstance(f, tuple) for src, dst in [f]
+        }
 
         df = df.select(select_cols)
         if rename_map:
             df = df.rename(rename_map)
+
         return df
 
     df_left = select_and_rename(left, left_fields + [left_on])
@@ -32,157 +31,118 @@ def join(
     return df_joined.to_dicts()
 
 
-def enrich_transactions(transactions, receipts):
-    result = join(
-        transactions,
-        receipts,
-        "hash",
-        "transaction_hash",
-        left_fields=[
-            "type",
-            "nonce",
-            "transaction_index",
-            "from_address",
-            "to_address",
-            "value",
-            "gas",
-            "gas_price",
-            "input",
-            "block_number",
-            "block_hash",
-            "max_fee_per_gas",
-            "max_priority_fee_per_gas",
-            "max_fee_per_blob_gas",
-            "blob_versioned_hashes",
-        ],
-        right_fields=[
-            "cumulative_gas_used",
-            "gas_used",
-            "contract_address",
-            "status",
-            "effective_gas_price",
-        ],
-    )
+def join(
+    left, right, left_on, right_on, left_fields: list, right_fields: list, how="left"
+):
+    def select_and_rename(table_name, data, key_field, fields, conn):
+        df = pd.DataFrame(data)
 
-    return result
+        conn.register(table_name, df)
+        rename_map = {
+            src: dst for f in fields if isinstance(f, tuple) for src, dst in [f]
+        }
+        if "*" in fields:
+            fields.remove("*")
+            fields.extend(
+                [f for f in df.columns if f not in rename_map and f != key_field]
+            )
 
+        select_parts = [
+            f"{col}" if not isinstance(col, tuple) else f"{col[0]} AS {col[1]}"
+            for col in fields
+        ]
 
-def enrich_logs(blocks, logs):
-    result = list(
-        join(
-            logs,
-            blocks,
-            ("block_number", "number"),
-            [
-                "type",
-                "log_index",
-                "transaction_hash",
-                "transaction_index",
-                "address",
-                "data",
-                "topics",
-                "block_number",
-            ],
-            [
-                ("timestamp", "block_timestamp"),
-                ("hash", "block_hash"),
-            ],
-        )
-    )
+        return select_parts
 
-    if len(result) != len(logs):
-        raise ValueError("The number of logs is wrong " + str(result))
+    conn = duckdb.connect(database=":memory:")
 
-    return result
+    left_select = select_and_rename("left_tbl", left, left_on, left_fields, conn)
+    left_select.append("left_tbl." + left_on)
+    right_select = select_and_rename("right_tbl", right, right_on, right_fields, conn)
+
+    query = f"""
+        SELECT {", ".join(left_select + right_select)}
+        FROM left_tbl
+        {how.upper()} JOIN right_tbl
+        ON left_tbl.{left_on} = right_tbl.{right_on}
+    """
+
+    result = conn.execute(query).fetchdf()  # returns pandas DataFrame
+    return result.to_dict(orient="records")
 
 
-def enrich_events(events, blocks, transactions):
-    result = list(
+async def enrich_event(events, blocks, pools, tokens, binance_client):
+    from src.fetchers.eth_price import EthPriceFetcher
+
+    timestamps = [block["timestamp"] * 1000 for block in blocks]
+    fetcher = EthPriceFetcher(binance_client)
+    prices = await fetcher.run(timestamps=timestamps)
+
+    prices = [
+        {
+            "block_number": block["number"],
+            "block_timestamp": block["timestamp"],
+            "eth_price": float(price["p"]),
+        }
+        for price, block in zip(prices, blocks)
+    ]
+
+    results = list(
         join(
             events,
-            blocks,
+            prices,
             "block_number",
-            "number",
+            "block_number",
+            ["*"],
             [
-                "type",
-                "dex",
-                "pool_address",
-                "amount0_in",
-                "amount1_in",
-                "amount0_out",
-                "amount1_out",
-                "transaction_hash",
-                "log_index",
-            ],
-            [
-                ("timestamp", "block_timestamp"),
-                ("hash", "block_hash"),
-            ],
-        )
-    )
-
-    result = list(
-        join(
-            result,
-            transactions,
-            "transaction_hash",
-            "hash",
-            [
-                "type",
-                "pool_address",
-                "log_index",
-                "block_number",
-                "dex",
-                "amount0_in",
-                "amount1_in",
-                "amount0_out",
-                "amount1_out",
                 "block_timestamp",
-                "block_hash",
-            ],
-            [
-                ("from_address", "sender"),
-                ("to_address", "to"),
+                "eth_price",
             ],
         )
     )
 
-    return result
-
-
-def enrich_traces(blocks, traces):
-    result = list(
+    results = list(
         join(
-            traces,
-            blocks,
-            ("block_number", "number"),
+            results,
+            pools,
+            "pool_address",
+            "pool_address",
+            ["*"],
             [
-                "type",
-                "transaction_index",
-                "from_address",
-                "to_address",
-                "value",
-                "input",
-                "output",
-                "trace_type",
-                "call_type",
-                "reward_type",
-                "gas",
-                "gas_used",
-                "subtraces",
-                "trace_address",
-                "error",
-                "status",
-                "transaction_hash",
-                "block_number",
-                "trace_id",
-                "trace_index",
-            ],
-            [
-                ("timestamp", "block_timestamp"),
-                ("hash", "block_hash"),
+                "token0_address",
+                "token1_address",
             ],
         )
     )
 
-    return result
+    results = list(
+        join(
+            results,
+            tokens,
+            "token0_address",
+            "address",
+            ["*"],
+            [
+                ("name", "token0_name"),
+                ("symbol", "token0_symbol"),
+                ("decimals", "token0_decimals"),
+            ],
+        )
+    )
+
+    results = list(
+        join(
+            results,
+            tokens,
+            "token1_address",
+            "address",
+            ["*"],
+            [
+                ("name", "token1_name"),
+                ("symbol", "token1_symbol"),
+                ("decimals", "token1_decimals"),
+            ],
+        )
+    )
+
+    return results

@@ -43,19 +43,11 @@ class RpcClient:
 
     async def get_web3_client_version(self):
         requests = [self.form_request("web3_clientVersion", [])]
-        payload = orjson.dumps(requests)
-        responses = await self.post(payload)
-
-        responses = orjson.loads(responses.content)
-        return responses
+        return await self.send_and_read(requests=requests)
 
     async def eth_call(self, param_sets: list[list]):
         requests = [self.form_request("eth_call", params) for params in param_sets]
-        payload = orjson.dumps(requests)
-        responses = await self.post(payload)
-
-        responses = orjson.loads(responses.content)
-        return sorted(responses, key=lambda response: response["id"])
+        return await self.send_and_read(requests=requests)
 
     async def get_block_by_number(
         self, block_numbers: list[int], include_transaction: bool
@@ -66,31 +58,29 @@ class RpcClient:
         requests = [
             self.form_request("eth_getBlockByNumber", params) for params in param_sets
         ]
-        payload = orjson.dumps(requests)
-        responses = await self.post(payload)
-
-        responses = orjson.loads(responses.content)
-        return sorted(responses, key=lambda response: response["id"])
+        return await self.send_and_read(requests=requests)
 
     async def get_receipt_by_block_number(self, block_numbers: list[int]):
         param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [
             self.form_request("eth_getBlockReceipts", params) for params in param_sets
         ]
-        payload = orjson.dumps(requests)
-        responses = await self.post(payload)
-
-        responses = orjson.loads(responses.content)
-        return sorted(responses, key=lambda response: response["id"])
+        return await self.send_and_read(requests=requests)
 
     async def get_trace_by_block_number(self, block_numbers: list[int]):
         param_sets = [[hex(block_number)] for block_number in block_numbers]
         requests = [self.form_request("trace_block", params) for params in param_sets]
+        return await self.send_and_read(requests=requests)
+
+    async def send_and_read(self, requests):
         payload = orjson.dumps(requests)
         responses = await self.post(payload)
 
-        responses = orjson.loads(responses.content)
-        return sorted(responses, key=lambda response: response["id"])
+        try:
+            return sorted(responses, key=lambda response: response["id"])
+        except:
+            print(responses.content)
+            raise
 
     async def post(self, payload: str):
         for attempt in range(1, self.max_retries + 1):
@@ -98,6 +88,7 @@ class RpcClient:
 
             try:
                 responses = await self._post(payload)
+                responses = orjson.loads(responses.content) # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
                 logger.debug(f"Successfully processed {len(payload)} requests")
                 return responses
             except Exception as e:

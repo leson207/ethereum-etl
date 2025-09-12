@@ -30,6 +30,19 @@ class EventRepository(BaseRepository):
                 log_index         UBIGINT,
                 block_number      UBIGINT,
 
+                block_timestamp   UINT,
+                eth_price         FLOAT,
+                
+                token0_address    TEXT,
+                token0_name       TEXT,
+                token0_symbol     TEXT,
+                token0_decimals   TEXT,
+                
+                token1_address    TEXT,
+                token1_name       TEXT,
+                token1_symbol     TEXT,
+                token1_decimals   TEXT,
+
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
                 PRIMARY KEY (block_number, transaction_hash, log_index)
