@@ -32,11 +32,11 @@ class CompositeExtractor:
             EntityType.LOG: self._extract_log,
             EntityType.TRANSFER: self._extract_transfer,
             EntityType.EVENT: self._extract_event,
+            EntityType.POOL: self._extract_pool,
+            EntityType.TOKEN: self._extract_token,
             EntityType.ACCOUNT: self._extract_account,
             EntityType.CONTRACT: self._extract_contract,
             EntityType.ABI: self._extract_abi,
-            EntityType.POOL: self._extract_pool,
-            EntityType.TOKEN: self._extract_token,
 
             EntityType.RAW_TRACE: self._extract_raw_trace,
             EntityType.TRACE: self._extract_trace

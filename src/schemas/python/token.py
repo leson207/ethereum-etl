@@ -6,7 +6,8 @@ class Token(BaseSchema):
     name: str
     symbol: str
     decimals: int
+    total_supply: int
 
-    _num_fields = ("decimals")
+    _num_fields = ("decimals", "total_supply")
 
     _address_fields = ("address", )

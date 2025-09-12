@@ -19,10 +19,11 @@ class TokenRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS '{table_name}'
             (
-                address   TEXT,
-                name      TEXT,
-                symbol    TEXT,
-                decimals  UINT,
+                address      TEXT,
+                name         TEXT,
+                symbol       TEXT,
+                decimals     UINT,
+                total_supply HUGEUINT,
 
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

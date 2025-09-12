@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import DECIMAL, Column, Integer, String
 
 from src.schemas.sql.base import EntityMeta
 
@@ -10,3 +10,4 @@ class Token(EntityMeta):
     name = Column(String)
     symbol = Column(String)
     decimals = Column(Integer)
+    total_supply = Column(DECIMAL)
