@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 from src.configs.environment import env
 from src.logger import logger
 
-# TODO: async here
 DATABASE_URL = f"clickhouse://{env.CLICKHOUSE_USERNAME}:{quote_plus(env.CLICKHOUSE_PASSWORD)}@{env.CLICKHOUSE_SERVER}/{env.DATABASE_NAME}"
 logger.info(f"CLICKHOUSE DATABASE URL: {DATABASE_URL}")
 

@@ -77,10 +77,10 @@ async def enrich_event(events, blocks, pools, tokens):
             events,
             blocks,
             "block_number",
-            "block_number",
+            "number",
             ["*"],
             [
-                "block_timestamp",
+                "timestamp",
                 "eth_price",
             ],
         )

@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker
 from src.configs.environment import env
 from src.logger import logger
 
-# TODO: async here
 DATABASE_PATH = f"{env._local_database_folder / env.DATABASE_NAME}.duckdb"
 DATABASE_URL = f"duckdb:///{DATABASE_PATH}"
 logger.info(f"DUCKDB DATABASE URL: {DATABASE_URL}")

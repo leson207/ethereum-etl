@@ -86,7 +86,6 @@ class CompositeExtractor:
             self.exporter[EntityType.BLOCK],
             self.exporter[EntityType.POOL],
             self.exporter[EntityType.TOKEN],
-            self.binance_client
         )
         self.exporter.clear(EntityType.EVENT)
         self.exporter.add_items(EntityType.EVENT, enriched_event)
