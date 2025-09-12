@@ -11,7 +11,7 @@ class PoolService:
             {"to": pool_address, "data": FUNCTION_HEX_SIGNATURES[erc]["token0"][:10]}
         ]
         res = await self.client.eth_call(param_sets=[param_set])
-        res=res[0]
+        res = res[0]
         res = decode_function_output(erc, "token0", res["result"])
         return res["token_address"]
 
@@ -20,8 +20,7 @@ class PoolService:
             {"to": pool_address, "data": FUNCTION_HEX_SIGNATURES[erc]["token1"]}
         ]
         res = await self.client.eth_call(param_sets=[param_set])
-        res=res[0]
-        print(res)
+        res = res[0]
         res = decode_function_output(erc, "token1", res["result"])
         return res["token_address"]
 
@@ -29,12 +28,12 @@ class PoolService:
         param_set = [
             {
                 "to": token_address,
-                "data": pool_address,
+                "data": FUNCTION_HEX_SIGNATURES[erc]["balanceOf"][:10]
+                + pool_address.lower().replace("0x", "").rjust(64, "0"),
             }
         ]
         res = await self.client.eth_call(param_sets=[param_set])
-        res=res[0]
-        print(res)
+        res = res[0]
         res = decode_function_output(erc, "balanceOf", res["result"])
         return res["balance"]
 
@@ -46,6 +45,6 @@ class PoolService:
             }
         ]
         res = await self.client.eth_call(param_sets=[param_set])
-        res=res[0]
+        res = res[0]
         res = decode_function_output(erc, "getReserves", res["result"])
         return res["reserve0"], res["reserve1"]
