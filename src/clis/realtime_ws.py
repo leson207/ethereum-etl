@@ -4,45 +4,43 @@ import time
 
 import httpx
 import orjson
+import uvloop
 from httpx_ws import aconnect_ws
 
-from exporters.utils import get_mapper
-from src.exporters.manager import ExportManager
-from src.fetchers.raw_block import RawBlockFetcher
-from src.fetchers.rpc_client import RPCClient
+from src.clients.binance_client import BinanceClient
+from src.clients.etherscan_client import EtherscanClient
+from src.clients.rpc_client import RpcClient
+from src.configs.environment import env
+from src.extractors.composite import CompositeExtractor
 from src.logger import logger
-from src.parsers.raw_block_parser import RawBlockParser
-from src.utils.enumeration import EntityType
 
-# TODO: higher level for uri
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def parse_arg():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--entity_types", type=str, default="")
-    parser.add_argument("--exporter_types", type=str, default="")
+    parser.add_argument("--entity-types", type=str, default="")
+    parser.add_argument("--exporter-types", type=str, default="")
     return parser.parse_args()
 
 
 async def main(entity_types, exporter_types):
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
     ws_url = "wss://mainnet.infura.io/ws/v3/29b89f1d2c8347d291a17088b2bf2a52"
 
-    mapper = get_mapper(entity_types, exporter_types)
-    exporter = ExportManager(mapper)
-
-    rpc_client = RPCClient(uri=url)
-    res = await rpc_client.send_batch_request([("web3_clientVersion", [])])
+    rpc_client = RpcClient(env.PROVIDER_URIS)
+    res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    raw_block_fetcher = RawBlockFetcher(
-        client=rpc_client,
-        exporter=exporter[EntityType.RAW_BLOCK],
-        max_retries=100,
-        backoff=1,
+    etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
+    binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
+
+    extractor = CompositeExtractor(
+        entity_types,
+        exporter_types,
+        rpc_client=rpc_client,
+        etherscan_client=etherscan_client,
+        binance_client=binance_client,
     )
-    raw_block_parser = RawBlockParser(exporter=exporter, target=entity_types)
 
     ws_client = httpx.AsyncClient()
 
@@ -59,6 +57,7 @@ async def main(entity_types, exporter_types):
         msg = orjson.loads(msg)
         subscription_id = msg["result"]
         logger.info(f"Subscription ID: {subscription_id}")
+
         try:
             while True:
                 message = await ws.receive_text()
@@ -67,37 +66,18 @@ async def main(entity_types, exporter_types):
                 block_number = int(message["params"]["result"]["number"], 16)
                 logger.info(f"Start process block number: {block_number}")
 
-                block_params = [
-                    {"block_number": block_number, "included_transaction": True}
-                ]
-
-                await asyncio.gather(
-                    raw_block_fetcher.run(
-                        params=block_params,
-                        initial=0,
-                        total=1,
-                        batch_size=30,
-                        desc="Raw Block: ",
-                        show_progress=False,
-                    ),
+                await extractor.run(
+                    start_block=block_number,
+                    end_block=block_number,
+                    process_batch_size=30,
+                    request_batch_size=30,
                 )
-                raw_blocks = [
-                    raw_block["data"] for raw_block in exporter[EntityType.RAW_BLOCK]
-                ]
-                raw_block_parser.parse(
-                    raw_blocks,
-                    initial=0,
-                    total=1,
-                    batch_size=1,
-                    show_progress=True,
-                )
-
-                exporter.export_all()
-                exporter.clear_all()
                 end = time.perf_counter()
                 logger.info(
                     f"Done process block number: {block_number} - Elapsed: {end - start:.6f} seconds"
                 )
+        # except Exception as e:
+        #     logger.info(e)
         finally:
             await ws.send_json(
                 {
@@ -108,6 +88,10 @@ async def main(entity_types, exporter_types):
                 }
             )
 
+            await rpc_client.close()
+            await etherscan_client.close()
+            await binance_client.close()
+
 
 if __name__ == "__main__":
     args = parse_arg()
@@ -115,4 +99,7 @@ if __name__ == "__main__":
     exporter_types = args.exporter_types.split(",")
     asyncio.run(main(entity_types, exporter_types))
 
-# python -m src.clis.real_time.ws_block --entity_types raw_block,block,transaction,withdrawal --exporter_types duckdb
+
+# python -m src.clis.realtime_ws \
+#     --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
+#     --exporter-types sqlite
