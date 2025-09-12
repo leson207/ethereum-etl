@@ -20,7 +20,7 @@ class EnvironmentSettings(BaseSettings):
 
     KAFKA_SERVER: str
 
-    PROVIER_URIS: list
+    PROVIDER_URIS: list
     WEBSOCKET_URL: str
 
     ETHERSCAN_API_KEY: str

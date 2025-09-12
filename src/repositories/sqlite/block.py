@@ -57,6 +57,8 @@ class BlockRepository(BaseRepository):
 
                 updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 
+                eth_price DOUBLE,
+
                 PRIMARY KEY (number, hash)
             );
         """

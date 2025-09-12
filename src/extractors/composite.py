@@ -114,7 +114,7 @@ class CompositeExtractor:
         ]
         self.exporter.add_items(EntityType.RAW_BLOCK, raw_blocks)
 
-    def _extract_block(self, params):
+    async def _extract_block(self, params):
         from src.extractors.block import BlockExtractor
 
         block_extractor = BlockExtractor()
@@ -128,6 +128,16 @@ class CompositeExtractor:
             batch_size=1,
             show_progress=True,
         )
+        # -------------------------------------------
+        from src.fetchers.eth_price import EthPriceFetcher
+
+        timestamps = [block["timestamp"] * 1000 for block in blocks]
+        fetcher = EthPriceFetcher(self.binance_client)
+        prices = await fetcher.run(timestamps=timestamps)
+
+        for block, price in zip(blocks, prices):
+            block['eth_price'] = float(price["p"])
+
         self.exporter.add_items(EntityType.BLOCK, blocks)
 
     def _extract_transaction(self, params):
@@ -337,6 +347,18 @@ class CompositeExtractor:
                 "token1_address": "0x"+token1["result"][-40:]
             }
             pools.append(pool)
+
+        # --------------------------------------------------
+        from src.fetchers.balance import BalanceFetcher
+        
+        fetcher = BalanceFetcher(self.rpc_client)
+        balances = await fetcher.run(pools=pools)
+        for pool, balance in zip(pools, balances):
+            if any("error" in i for i in balance):
+                continue
+
+            pool['token0_balance'] = int(balance[0]['result'],16)
+            pool['token1_balance'] = int(balance[1]['result'],16)
 
         self.exporter.add_items(EntityType.POOL, pools)
     

@@ -71,26 +71,11 @@ def join(
     return result.to_dict(orient="records")
 
 
-async def enrich_event(events, blocks, pools, tokens, binance_client):
-    from src.fetchers.eth_price import EthPriceFetcher
-
-    timestamps = [block["timestamp"] * 1000 for block in blocks]
-    fetcher = EthPriceFetcher(binance_client)
-    prices = await fetcher.run(timestamps=timestamps)
-
-    prices = [
-        {
-            "block_number": block["number"],
-            "block_timestamp": block["timestamp"],
-            "eth_price": float(price["p"]),
-        }
-        for price, block in zip(prices, blocks)
-    ]
-
+async def enrich_event(events, blocks, pools, tokens):
     results = list(
         join(
             events,
-            prices,
+            blocks,
             "block_number",
             "block_number",
             ["*"],

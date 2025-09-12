@@ -32,7 +32,7 @@ async def main(
     entity_types: list[str],
     exporter_types: list[str],
 ):
-    rpc_client = RpcClient(env.PROVIER_URIS)
+    rpc_client = RpcClient(env.PROVIDER_URIS)
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 

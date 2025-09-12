@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, Integer, String
+from sqlalchemy import JSON, Column, Integer, String, Double
 
 from src.schemas.sql.base import EntityMeta
 
@@ -39,3 +39,5 @@ class Block(EntityMeta):
     excess_blob_gas = Column(Integer)
     parent_beacon_block_root = Column(String)
     requests_hash = Column(String)
+
+    eth_price = Column(Double)

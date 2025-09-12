@@ -29,11 +29,12 @@ class PoolService:
         param_set = [
             {
                 "to": token_address,
-                "data": FUNCTION_HEX_SIGNATURES[erc]["balanceOf"] + pool_address,
+                "data": pool_address,
             }
         ]
         res = await self.client.eth_call(param_sets=[param_set])
         res=res[0]
+        print(res)
         res = decode_function_output(erc, "balanceOf", res["result"])
         return res["balance"]
 

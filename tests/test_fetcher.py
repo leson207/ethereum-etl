@@ -1,13 +1,11 @@
 import asyncio
-
+from src.configs.environment import env
 
 async def test_raw_block_fetcher():
     from src.clients.rpc_client import RpcClient
     from src.fetchers.raw_block import RawBlockFetcher
 
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
-    client = RpcClient(url)
+    client = RpcClient(env.PROVIDER_URIS)
     fetcher = RawBlockFetcher(client=client)
     blocks = await fetcher.run(range(23_000_000, 23_000_010))
     for block in blocks:
@@ -17,9 +15,7 @@ async def test_raw_receipt_fetcher():
     from src.clients.rpc_client import RpcClient
     from src.fetchers.raw_receipt import RawReceiptFetcher
 
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
-    client = RpcClient(url)
+    client = RpcClient(env.PROVIDER_URIS)
     fetcher = RawReceiptFetcher(client=client)
     all_block_receipts = await fetcher.run(range(23_000_000, 23_000_010))
     for block_receipts in all_block_receipts:
@@ -30,9 +26,7 @@ async def test_raw_trace_fetcher():
     from src.clients.rpc_client import RpcClient
     from src.fetchers.raw_trace import RawTraceFetcher
 
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
-    client = RpcClient(url)
+    client = RpcClient(env.PROVIDER_URIS)
     fetcher = RawTraceFetcher(client=client)
     all_block_traces = await fetcher.run(range(23_000_000, 23_000_010))
     for block_traces in all_block_traces:
@@ -43,9 +37,7 @@ async def test_pool_fetcher():
     from src.clients.rpc_client import RpcClient
     from src.fetchers.pool import PoolFetcher
 
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
-    client = RpcClient(url)
+    client = RpcClient(env.PROVIDER_URIS)
     fetcher = PoolFetcher(client=client)
     res = await fetcher.run(["0xe55b01ca3d407cd4de38e988c84ec13ae188b0ca"]*10)
     for i in res:
@@ -55,9 +47,7 @@ async def test_token_fetcher():
     from src.clients.rpc_client import RpcClient
     from src.fetchers.token import TokenFetcher
 
-    # url = "https://mainnet.infura.io/v3/29b89f1d2c8347d291a17088b2bf2a52"
-    url = "https://eth-pokt.nodies.app"
-    client = RpcClient(url)
+    client = RpcClient(env.PROVIDER_URIS)
     fetcher = TokenFetcher(client=client)
     res = await fetcher.run(["0x57e114B691Db790C35207b2e685D4A43181e6061"]*10)
     for i in res:
@@ -101,6 +91,21 @@ async def test_contract_fetcher():
     for i in res:
         print(i.keys())
 
+async def test_balance_fetcher():
+    from src.clients.rpc_client import RpcClient
+    from src.fetchers.balance import BalanceFetcher
+
+    client = RpcClient(env.PROVIDER_URIS)
+    fetcher = BalanceFetcher(client=client)
+    pool = {
+        "pool_address": "0x9E1bF6Db42E4C14a28dd484655ba80EBC38DFb5D",
+        "token0_address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "token1_address": "0x1963A95cfc30e49Cc75F7F2de6027289971cAc79"
+    }
+    res = await fetcher.run([pool]*10)
+    for i in res:
+        print(i)
+
 if __name__ == "__main__":
     # asyncio.run(test_raw_block_fetcher())
     # asyncio.run(test_raw_receipt_fetcher())
@@ -109,4 +114,5 @@ if __name__ == "__main__":
     # asyncio.run(test_token_fetcher())
     # asyncio.run(test_eth_price_fetcher())
     # asyncio.run(test_signature_fetcher())
-    asyncio.run(test_contract_fetcher())
+    # asyncio.run(test_contract_fetcher())
+    asyncio.run(test_balance_fetcher())
