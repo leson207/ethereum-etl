@@ -26,7 +26,6 @@ class CompositeExtractor:
             EntityType.BLOCK: self._extract_block,
             EntityType.TRANSACTION: self._extract_transaction,
             EntityType.WITHDRAWAL: self._extract_withdrawal,
-            # EntityType.ETH_PRICE: self._extract_eth_price,
 
             EntityType.RAW_RECEIPT: self._extract_raw_receipt,
             EntityType.RECEIPT: self._extract_receipt,
@@ -77,6 +76,10 @@ class CompositeExtractor:
             self.exporter.clear_all()
 
     async def _enrich(self):
+        if EntityType.EVENT in self.target_entity_types:
+            await self._enrich_event()
+
+    async def _enrich_event(self):
         from src.extractors.enrich import enrich_event
         enriched_event = await enrich_event(
             self.exporter[EntityType.EVENT],
@@ -311,7 +314,10 @@ class CompositeExtractor:
         from src.fetchers.pool import PoolFetcher
 
         fetcher = PoolFetcher(client=self.rpc_client)
-        contract_addresses = [contract['address'] for contract in self.exporter[EntityType.CONTRACT]]
+        contract_addresses = [
+            contract['pool_address']
+            for contract in self.exporter[EntityType.EVENT]
+        ]
         contract_addresses = list(set(contract_addresses))
         pool_data = await fetcher.run(
             contract_addresses,
@@ -320,14 +326,15 @@ class CompositeExtractor:
         )
         pools = []
         for address, data in zip(contract_addresses, pool_data):
-            token0, token1 = data
-            if "error" in token0:
+            if any("error" in i for i in data):
                 continue
-            
+
+            token0, token1 = data
+
             pool = {
                 "pool_address": address,
-                "token0_address": token0["result"],
-                "token1_address": token1["result"]
+                "token0_address": "0x"+token0["result"][-40:],
+                "token1_address": "0x"+token1["result"][-40:]
             }
             pools.append(pool)
 
@@ -335,6 +342,16 @@ class CompositeExtractor:
     
     async def _extract_token(self, params):
         from src.fetchers.token import TokenFetcher
+        def decode(hex_string):
+            data = bytes.fromhex(hex_string[2:])
+
+            # string length is at byte 32..64
+            length = int.from_bytes(data[32:64], "big")
+
+            # string content is at byte 64..64+length
+            string_bytes = data[64:64+length]
+            decoded = string_bytes.decode()
+            return decoded
 
         token_addresses = [
             addr
@@ -351,16 +368,16 @@ class CompositeExtractor:
 
         tokens = []
         for address,data in zip(token_addresses, token_data):
-            name, symbol, decimals, total_suplly = data
-            if "error" in name:
+            name, symbol, decimals, total_supply = data
+            if any("error" in i for i in data):
                 continue
-
+            
             token = {
                 "address": address,
-                "name": name["result"],
-                "symbol": symbol["result"],
-                "decimals": decimals["result"],
-                "total_suplly": total_suplly["result"],
+                "name": decode(name["result"]),
+                "symbol": decode(symbol["result"]),
+                "decimals": int(decimals["result"],16),
+                "total_supply": int(total_supply["result"], 16),
             }
             tokens.append(token)
         

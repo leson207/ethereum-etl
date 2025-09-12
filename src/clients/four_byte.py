@@ -47,6 +47,21 @@ class FourByteClient:
         result = response["results"][0]
         cache_service.set(key, orjson.dumps(result).decode("utf-8"))
 
+        # {
+        #     "count": 1,
+        #     "next": null,
+        #     "previous": null,
+        #     "results": [
+        #         {
+        #         "id": 1,
+        #         "created_at": "2020-11-30T22:38:00.801049Z",
+        #         "text_signature": "Transfer(address,address,uint256)",
+        #         "hex_signature": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        #         "bytes_signature": "ÝòR­\u001bâÈÂ°hü7ª+§ñcÄ¡\u0016(õZMõ#³ï"
+        #         }
+        #     ]
+        # }
+
         return result
 
     async def _get_event_signature(self, path: str, params: dict):

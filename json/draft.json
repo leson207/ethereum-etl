@@ -1,30 +1,371 @@
-{
-  "jsonrpc": "2.0",
-  "method": "eth_subscription",
-  "params": {
-    "subscription": "0xaffc3927f3e14412b524626b72d73839",
-    "result": {
-      "baseFeePerGas": "0x2781bcfd",
-      "blobGasUsed": "0x120000",
-      "difficulty": "0x0",
-      "excessBlobGas": "0x0",
-      "extraData": "0x6265617665726275696c642e6f7267",
-      "gasLimit": "0x2af50bd",
-      "gasUsed": "0xb3f416",
-      "hash": "0xfae6cbeef6767bc0ed42bd82680b0d930f802318dac4bcbad7eabfdd23ee1e10",
-      "logsBloom": "0xbfffbdd67fff5dfd7fdff5cffe7fbfbfffff7bff3e79e7fbf76b5dfffdfaffc343fdef7efefffbe7ff5f7f7afd8fb77cefffd9ffff9ffcb0fef76ddb3f73bfeffd55bff9ede3ffefffad77ffdf75ebed7fb5de3bb7f27fce3db2beabdb7ffad9f6fff075ffefd7fbcd2fc1be6e2ffdfbf7af6bffffdff759df63ff7ffffebffb65efdbf97cb77fce7e7d7376636ffcb6fd7a9bbfb5f9f7fffa37fefebbf9f7fd6f9fcfaaeecaff6ff53ffef79be98f7ebddf57fdfcfedf7fdf777fbbefff3fef4ddc3bff6df8feeb7cfb5dddf79eedbf9e77fefef6abf9f7debff1defffdfffffdf7fe8f9e7f9bf5befffff1ff27d96dadfffafe65fd2dffdf7bf7c65aaf7ebb",
-      "miner": "0x95222290dd7278aa3ddd389cc1e1d165cc4bafe5",
-      "mixHash": "0x9d4fc870af4492e1b6b9f48ff92687aab49fe794ebc93b46d1cf87bdb471f90b",
-      "nonce": "0x0000000000000000",
-      "number": "0x16308c5",
-      "parentBeaconBlockRoot": "0x444dd9333f3366407684356ee24f47acb477f548776b6e44f997cd21380b84f4",
-      "parentHash": "0x6b7635c8f907e011394adde12c343003edd06d78a71071d002b36fe870577cbc",
-      "receiptsRoot": "0xf54ef7d99470e827fbd97c5d416d44ebca9bc0ad6d0c5fecd2e441510f32070f",
-      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-      "stateRoot": "0x525319b6bc5d459b87a3b0f9fb9e24830b09b11c86d883966563d17575931e04",
-      "timestamp": "0x68b56da3",
-      "transactionsRoot": "0xc6ff6960f0cd632f758a242028251561ac9d64e1985addbf5c4870639b33c6ff",
-      "withdrawalsRoot": "0x95daf4aae0319bdb9b39b4ea6f78fcb6dda5e833fe3fb61d7ee107527336c2a7"
-    }
-  }
-}
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "msgSender",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "otherSigner",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "operation",
+                "type": "bytes32",
+            },
+        ],
+        "name": "BatchTransacted",
+        "type": "event",
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "sender",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256",
+            },
+        ],
+        "name": "BatchTransfer",
+        "type": "event",
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "from",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256",
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes",
+            },
+        ],
+        "name": "Deposited",
+        "type": "event",
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "msgSender",
+                "type": "address",
+            }
+        ],
+        "name": "SafeModeActivated",
+        "type": "event",
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "msgSender",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "otherSigner",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "operation",
+                "type": "bytes32",
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "toAddress",
+                "type": "address",
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256",
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes",
+            },
+        ],
+        "name": "Transacted",
+        "type": "event",
+    },
+    {"stateMutability": "payable", "type": "fallback"},
+    {
+        "inputs": [],
+        "name": "activateSafeMode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "forwarderAddress",
+                "type": "address",
+            },
+            {
+                "internalType": "address",
+                "name": "tokenContractAddress",
+                "type": "address",
+            },
+            {"internalType": "uint256[]", "name": "tokenIds", "type": "uint256[]"},
+        ],
+        "name": "batchFlushERC1155ForwarderTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "forwarderAddress",
+                "type": "address",
+            },
+            {
+                "internalType": "address",
+                "name": "tokenContractAddress",
+                "type": "address",
+            },
+            {"internalType": "uint256", "name": "tokenId", "type": "uint256"},
+        ],
+        "name": "flushERC1155ForwarderTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "forwarderAddress",
+                "type": "address",
+            },
+            {
+                "internalType": "address",
+                "name": "tokenContractAddress",
+                "type": "address",
+            },
+            {"internalType": "uint256", "name": "tokenId", "type": "uint256"},
+        ],
+        "name": "flushERC721ForwarderTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "forwarderAddress",
+                "type": "address",
+            },
+            {
+                "internalType": "address",
+                "name": "tokenContractAddress",
+                "type": "address",
+            },
+        ],
+        "name": "flushForwarderTokens",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "getNextSequenceId",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address[]", "name": "allowedSigners", "type": "address[]"}
+        ],
+        "name": "init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "initialized",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "address", "name": "signer", "type": "address"}],
+        "name": "isSigner",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "_operator", "type": "address"},
+            {"internalType": "address", "name": "_from", "type": "address"},
+            {"internalType": "uint256[]", "name": "ids", "type": "uint256[]"},
+            {"internalType": "uint256[]", "name": "values", "type": "uint256[]"},
+            {"internalType": "bytes", "name": "data", "type": "bytes"},
+        ],
+        "name": "onERC1155BatchReceived",
+        "outputs": [{"internalType": "bytes4", "name": "", "type": "bytes4"}],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "_operator", "type": "address"},
+            {"internalType": "address", "name": "_from", "type": "address"},
+            {"internalType": "uint256", "name": "id", "type": "uint256"},
+            {"internalType": "uint256", "name": "value", "type": "uint256"},
+            {"internalType": "bytes", "name": "data", "type": "bytes"},
+        ],
+        "name": "onERC1155Received",
+        "outputs": [{"internalType": "bytes4", "name": "", "type": "bytes4"}],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "_operator", "type": "address"},
+            {"internalType": "address", "name": "_from", "type": "address"},
+            {"internalType": "uint256", "name": "_tokenId", "type": "uint256"},
+            {"internalType": "bytes", "name": "_data", "type": "bytes"},
+        ],
+        "name": "onERC721Received",
+        "outputs": [{"internalType": "bytes4", "name": "", "type": "bytes4"}],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "safeMode",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "toAddress", "type": "address"},
+            {"internalType": "uint256", "name": "value", "type": "uint256"},
+            {"internalType": "bytes", "name": "data", "type": "bytes"},
+            {"internalType": "uint256", "name": "expireTime", "type": "uint256"},
+            {"internalType": "uint256", "name": "sequenceId", "type": "uint256"},
+            {"internalType": "bytes", "name": "signature", "type": "bytes"},
+        ],
+        "name": "sendMultiSig",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address[]", "name": "recipients", "type": "address[]"},
+            {"internalType": "uint256[]", "name": "values", "type": "uint256[]"},
+            {"internalType": "uint256", "name": "expireTime", "type": "uint256"},
+            {"internalType": "uint256", "name": "sequenceId", "type": "uint256"},
+            {"internalType": "bytes", "name": "signature", "type": "bytes"},
+        ],
+        "name": "sendMultiSigBatch",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "toAddress", "type": "address"},
+            {"internalType": "uint256", "name": "value", "type": "uint256"},
+            {
+                "internalType": "address",
+                "name": "tokenContractAddress",
+                "type": "address",
+            },
+            {"internalType": "uint256", "name": "expireTime", "type": "uint256"},
+            {"internalType": "uint256", "name": "sequenceId", "type": "uint256"},
+            {"internalType": "bytes", "name": "signature", "type": "bytes"},
+        ],
+        "name": "sendMultiSigToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "forwarderAddress", "type": "address"},
+            {"internalType": "bool", "name": "autoFlush", "type": "bool"},
+        ],
+        "name": "setAutoFlush1155",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "forwarderAddress", "type": "address"},
+            {"internalType": "bool", "name": "autoFlush", "type": "bool"},
+        ],
+        "name": "setAutoFlush721",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "name": "signers",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "bytes4", "name": "interfaceId", "type": "bytes4"}],
+        "name": "supportsInterface",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {"stateMutability": "payable", "type": "receive"},
+]

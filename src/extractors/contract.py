@@ -23,7 +23,7 @@ class ContractExtractor:
 
         contract_addresses = list(set(contract_addresses))
         responses = await self.fetcher.run(
-            contract_addresses=contract_addresses, show_progress=True
+            contract_addresses=contract_addresses, show_progress=show_progress
         )
         results = []
         for address, response in zip(contract_addresses, responses):
