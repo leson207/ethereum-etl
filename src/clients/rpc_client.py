@@ -74,21 +74,28 @@ class RpcClient:
 
     async def send_and_read(self, requests):
         payload = orjson.dumps(requests)
-        responses = await self.post(payload)
+        for attempt in range(5):
+            responses = await self.post(payload)
 
+        # response error retry
         try:
-            return sorted(responses, key=lambda response: response["id"])
+            responses = orjson.loads(responses.content) # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
+            responses = sorted(responses, key=lambda response: response["id"])
+            if any(res["result"] is None for res in responses):
+                raise
+            
+            return responses
         except:
             print(responses.content)
             raise
 
     async def post(self, payload: str):
+        # network error retry
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
 
             try:
                 responses = await self._post(payload)
-                responses = orjson.loads(responses.content) # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
                 logger.debug(f"Successfully processed {len(payload)} requests")
                 return responses
             except Exception as e:
