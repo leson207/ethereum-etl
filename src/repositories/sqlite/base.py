@@ -156,10 +156,10 @@ class BaseRepository:
         else:
             prefix = ""
 
-        for i in data:
-            for key, value in i.items():
-                if not isinstance(value, bool) and isinstance(value, int):
-                    i[key] = str(value) # SQLITE overflow vbig int value
+        # for i in data:
+        #     for key, value in i.items():
+        #         if not isinstance(value, bool) and isinstance(value, int):
+        #             i[key] = str(value) # SQLITE overflow vbig int value
 
         stmt = sa.insert(self.sql_schema).prefix_with(prefix)
         self.db.execute(stmt, data)

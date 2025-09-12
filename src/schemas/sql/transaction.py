@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, Integer, String
+from sqlalchemy import JSON, Column, Integer, String, Numeric
 
 from src.schemas.sql.base import EntityMeta
 
@@ -13,7 +13,7 @@ class Transaction(EntityMeta):
     max_fee_per_gas = Column(Integer)
     max_priority_fee_per_gas = Column(Integer)
     to_address = Column(String)
-    value = Column(Integer)
+    value = Column(Numeric) # this value is to big for this python table to hold as int, let the database convert it
     access_list = Column(JSON)
     authorization_list = Column(JSON)
     input = Column(String)

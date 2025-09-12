@@ -6,7 +6,6 @@ from src.schemas.sql.base import EntityMeta
 class Withdrawal(EntityMeta):
     __tablename__ = "withdrawal"
 
-    block_hash = Column(String, primary_key=True)
     block_number = Column(Integer, primary_key=True)
 
     # Core fields

@@ -19,7 +19,6 @@ class WithdrawalRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS '{table_name}'
             (
-                block_hash TEXT,
                 block_number UBIGINT,
 
                 'index' UBIGINT,
@@ -29,7 +28,7 @@ class WithdrawalRepository(BaseRepository):
 
                 updated_time DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-                PRIMARY KEY (block_number, block_hash, 'index')
+                PRIMARY KEY (block_number, 'index')
             );
         """
         self.db.execute(text(query))

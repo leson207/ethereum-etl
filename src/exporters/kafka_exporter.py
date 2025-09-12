@@ -4,11 +4,11 @@ from kafka.admin import NewTopic
 
 from src.configs.kafka_conn import admin, producer
 from src.logger import logger
-from src.configs.environment import env
+
 
 class KafkaExporter:
     def __init__(self, topic):
-        self.topic = topic + env.ENVIRONMENT_NAME
+        self.topic = topic
         self.producer = producer
         self.admin = admin
 

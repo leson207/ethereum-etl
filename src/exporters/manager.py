@@ -10,9 +10,6 @@ class ExportManager:
 
         self.mapper = mapper
 
-    def add_item(self, key, item):
-        self.data[key].append(item)
-
     def add_items(self, key, items: list):
         self.data[key].extend(items)
 
@@ -28,6 +25,10 @@ class ExportManager:
 
     def export_all(self):
         for entity_type in self.data:
+            self.export(entity_type)
+
+    def exports(self, entity_types: list[str]):
+        for entity_type in entity_types:
             self.export(entity_type)
 
     def export(self, entity_type: str):

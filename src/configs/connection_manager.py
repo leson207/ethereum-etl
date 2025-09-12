@@ -8,3 +8,7 @@ class ConnectionManager:
     CLICKHOUSE_CONNECTION = clickhouse_connection
     KAFKA_PRODUCER = producer
     KAFKA_ADMIN = admin
+
+    def close(self):
+        # close all connection
+        pass

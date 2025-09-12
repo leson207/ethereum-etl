@@ -3,14 +3,13 @@ import asyncio
 
 import uvloop
 
+from src.clients.binance_client import BinanceClient
 from src.clients.etherscan_client import EtherscanClient
 from src.clients.rpc_client import RpcClient
-from src.exporters.utils import get_mapper
-from src.exporters.manager import ExportManager
+from src.configs.environment import env
 from src.extractors.composite import CompositeExtractor
 from src.logger import logger
-from src.clients.binance_client import BinanceClient
-from src.configs.environment import env
+
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
@@ -20,22 +19,19 @@ def parse_arg():
     parser.add_argument("--end-block", type=int)
     parser.add_argument("--process-batch-size", type=int, default=1000)
     parser.add_argument("--request-batch-size", type=int, default=30)
-    parser.add_argument("--entity_types", type=str, default="")
-    parser.add_argument("--exporter_types", type=str, default="")
+    parser.add_argument("--entity-types", type=str, default=None)
+    parser.add_argument("--exporter-types", type=str, default=None)
     return parser.parse_args()
 
 
 async def main(
-    start_block,
-    end_block,
-    process_batch_size,
-    request_batch_size,
-    entity_types,
-    exporter_types,
+    start_block: int,
+    end_block: int,
+    process_batch_size: int,
+    request_batch_size: int,
+    entity_types: list[str],
+    exporter_types: list[str],
 ):
-    mapper = get_mapper(entity_types, exporter_types)
-    exporter = ExportManager(mapper)
-
     rpc_client = RpcClient(env.PROVIER_URIS)
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
@@ -43,19 +39,24 @@ async def main(
     etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
     binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
 
+    # entities=[
+    #     "raw_block", "block", "transaction", "eth_price",
+    #     "raw_receipt", "receipt", "log", "transfer", "event", "account" "contract", "abi", "pool", "token",
+    #     "raw_trace", "trace",
+    # ]
+
     extractor = CompositeExtractor(
-        exporter=exporter, rpc_client=rpc_client, etherscan_client=etherscan_client, binance_client = binance_client
+        entity_types,
+        exporter_types,
+        rpc_client=rpc_client,
+        etherscan_client=etherscan_client,
+        binance_client=binance_client,
     )
     await extractor.run(
         start_block=start_block,
         end_block=end_block,
         process_batch_size=process_batch_size,
-        request_batch_size=request_batch_size,
-        entities=[
-            "raw_block", "block", "transaction", "eth_price",
-            "raw_receipt", "receipt", "log", "transfer", "account", "event", "contract", "abi", "pool", "token",
-            "raw_trace", "trace",
-        ],
+        request_batch_size=request_batch_size
     )
 
     await rpc_client.close()
@@ -65,8 +66,8 @@ async def main(
 
 if __name__ == "__main__":
     args = parse_arg()
-    entity_types = args.entity_types.split(",")
-    exporter_types = args.exporter_types.split(",")
+    entity_types = args.entity_types.split(",") if args.entity_types else []
+    exporter_types = args.exporter_types.split(",") if args.exporter_types else []
     asyncio.run(
         main(
             args.start_block,
@@ -79,4 +80,6 @@ if __name__ == "__main__":
     )
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-#     --process-batch-size 100 --request-batch-size 30
+#     --process-batch-size 100 --request-batch-size 30 \
+#     --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
+#     --exporter-types sqlite

@@ -6,7 +6,7 @@ import httpx
 import orjson
 from httpx_ws import aconnect_ws
 
-from src.clis.utils import get_mapper
+from exporters.utils import get_mapper
 from src.exporters.manager import ExportManager
 from src.fetchers.raw_block import RawBlockFetcher
 from src.fetchers.rpc_client import RPCClient

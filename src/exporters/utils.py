@@ -35,7 +35,6 @@ def resolve_dependency(target_entity_types):
     }
 
     require_entity_types = [i for i in target_entity_types]
-
     for i in require_entity_types:
         for j in dependencies[i]:
             if j not in require_entity_types:

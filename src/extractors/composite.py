@@ -1,16 +1,22 @@
 import inspect
 from types import SimpleNamespace
 
-from src.logger import logger
-from src.utils.enumeration import EntityType
+from src.clients.binance_client import BinanceClient
+from src.clients.etherscan_client import EtherscanClient
 from src.clients.rpc_client import RpcClient
 from src.exporters.manager import ExportManager
-from src.clients.etherscan_client import EtherscanClient
-from src.clients.binance_client import BinanceClient
+from src.exporters.utils import get_mapper, resolve_dependency
+from src.logger import logger
+from src.utils.enumeration import EntityType
+
 
 class CompositeExtractor:
-    def __init__(self, exporter: ExportManager, rpc_client: RpcClient, etherscan_client:EtherscanClient, binance_client: BinanceClient):
-        self.exporter = exporter
+    def __init__(self, target_entity_types: list[str], exporter_types: list[str], rpc_client: RpcClient, etherscan_client:EtherscanClient, binance_client: BinanceClient):
+        self.target_entity_types = target_entity_types
+        self.require_entity_types = resolve_dependency(self.target_entity_types)
+        mapper = get_mapper(self.require_entity_types, exporter_types)
+        self.exporter = ExportManager(mapper)
+        
         self.rpc_client = rpc_client
         self.etherscan_client = etherscan_client
         self.binance_client = binance_client
@@ -38,13 +44,13 @@ class CompositeExtractor:
         }
 
     async def run(
-        self, start_block, end_block, process_batch_size, request_batch_size, entities
+        self, start_block, end_block, process_batch_size, request_batch_size
     ):
         for batch_start_block in range(start_block, end_block + 1, process_batch_size):
             batch_end_block = min(batch_start_block + process_batch_size, end_block)
 
-            for entity in entities:
-                extract_fn = self.mapping[entity]
+            for entity_types in self.require_entity_types:
+                extract_fn = self.mapping[entity_types]
                 params = SimpleNamespace(
                     start_block=start_block,
                     end_block=end_block,
@@ -57,10 +63,10 @@ class CompositeExtractor:
                     await result
 
             logger.info(f"Block range: {batch_start_block} - {batch_end_block}")
-            for entity in entities:
-                logger.info(f"Num {entity}: {len(self.exporter[entity])}")
+            for entity_types in self.require_entity_types:
+                logger.info(f"Num {entity_types}: {len(self.exporter[entity_types])}")
 
-            self.exporter.export_all()
+            self.exporter.exports(self.target_entity_types)
             self.exporter.clear_all()
 
     async def _extract_raw_block(self, params):
