@@ -4,13 +4,16 @@ import httpx
 import orjson
 
 from src.clients.throttler import Throttler
+from src.configs.environment import env
 from src.logger import logger
 from src.services.cache_service import cache_service
 from src.utils.common import serialize_dict_value
 
 
 class BinanceClient:
-    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
+    def __init__(
+        self, url: str = env.BINANCE_API_URL, max_retries: int = 5, backoff: float = 3
+    ):
         self.url = url
 
         timeout = httpx.Timeout(timeout=60)

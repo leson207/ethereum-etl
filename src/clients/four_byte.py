@@ -1,16 +1,19 @@
 import asyncio
+from typing import Callable
 
 import httpx
 import orjson
 
 from src.clients.throttler import Throttler
+from src.configs.environment import env
 from src.logger import logger
-from typing import Callable
 from src.services.cache_service import cache_service
 
 
 class FourByteClient:
-    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
+    def __init__(
+        self, url: str = env.FOURBYTE_API_URL, max_retries: int = 5, backoff: float = 3
+    ):
         self.url = url
 
         timeout = httpx.Timeout(timeout=60)

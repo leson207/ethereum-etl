@@ -24,6 +24,10 @@ class EnvironmentSettings(BaseSettings):
     WEBSOCKET_URL: str
 
     ETHERSCAN_API_KEY: str
+    ETHERSCAN_API_URL: str
+
+    BINANCE_API_URL: str
+    FOURBYTE_API_URL: str
 
     ENVIRONMENT_NAME: str
     DEBUG_MODE: bool

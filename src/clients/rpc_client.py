@@ -5,11 +5,17 @@ import httpx
 import orjson
 
 from src.clients.throttler import Throttler
+from src.configs.environment import env
 from src.logger import logger
 
 
 class RpcClient:
-    def __init__(self, uris: list[str], max_retries: int = 5, backoff: float = 3):
+    def __init__(
+        self,
+        uris: list[str] = env.PROVIDER_URIS,
+        max_retries: int = 5,
+        backoff: float = 3,
+    ):
         self.uris = uris
         timeout = httpx.Timeout(timeout=60)
         headers = {
@@ -79,11 +85,13 @@ class RpcClient:
 
         # response error retry
         try:
-            responses = orjson.loads(responses.content) # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
+            responses = orjson.loads(
+                responses.content
+            )  # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
             responses = sorted(responses, key=lambda response: response["id"])
             if any(res["result"] is None for res in responses):
                 raise
-            
+
             return responses
         except:
             print(responses.content)

@@ -25,14 +25,12 @@ def parse_arg():
 
 
 async def main(entity_types, exporter_types):
-    ws_url = "wss://mainnet.infura.io/ws/v3/29b89f1d2c8347d291a17088b2bf2a52"
-
-    rpc_client = RpcClient(env.PROVIDER_URIS)
+    rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
-    binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
+    etherscan_client = EtherscanClient()
+    binance_client = BinanceClient()
 
     extractor = CompositeExtractor(
         entity_types,
@@ -44,7 +42,7 @@ async def main(entity_types, exporter_types):
 
     ws_client = httpx.AsyncClient()
 
-    async with aconnect_ws(ws_url, ws_client) as ws:
+    async with aconnect_ws(env.WEBSOCKET_URL, ws_client) as ws:
         await ws.send_json(
             {
                 "id": 1,

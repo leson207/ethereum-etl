@@ -10,9 +10,10 @@ from src.logger import logger
 from src.services.cache_service import cache_service
 
 
-# Error in response so each request function must have it corresponding retry
 class EtherscanClient:
-    def __init__(self, url: str, max_retries: int = 5, backoff: float = 3):
+    def __init__(
+        self, url: str = env.ETHERSCAN_API_URL, max_retries: int = 5, backoff: float = 3
+    ):
         self.url = url
         self.chain_id = 1
         self.api_key = env.ETHERSCAN_API_KEY

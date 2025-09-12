@@ -6,7 +6,6 @@ import uvloop
 from src.clients.binance_client import BinanceClient
 from src.clients.etherscan_client import EtherscanClient
 from src.clients.rpc_client import RpcClient
-from src.configs.environment import env
 from src.extractors.composite import CompositeExtractor
 from src.logger import logger
 
@@ -32,12 +31,12 @@ async def main(
     entity_types: list[str],
     exporter_types: list[str],
 ):
-    rpc_client = RpcClient(env.PROVIDER_URIS)
+    rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-    etherscan_client = EtherscanClient(url="https://api.etherscan.io/v2/api")
-    binance_client = BinanceClient(url="https://api4.binance.com/api/v3")
+    etherscan_client = EtherscanClient()
+    binance_client = BinanceClient()
 
     # entities=[
     #     "raw_block", "block", "transaction", "eth_price",
@@ -56,7 +55,7 @@ async def main(
         start_block=start_block,
         end_block=end_block,
         process_batch_size=process_batch_size,
-        request_batch_size=request_batch_size
+        request_batch_size=request_batch_size,
     )
 
     await rpc_client.close()
