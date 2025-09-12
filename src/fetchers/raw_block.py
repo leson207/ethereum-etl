@@ -20,6 +20,7 @@ class RawBlockFetcher:
     async def run(
         self,
         block_numbers: list[int],
+        include_transaction: bool,
         initial: int = None,
         total: int = None,
         batch_size: int = 30,
@@ -50,6 +51,7 @@ class RawBlockFetcher:
                         results,
                         block_numbers[i : i + batch_size],
                         range(i, min(i + batch_size, length)),
+                        include_transaction=include_transaction
                     )
                 )
                 tasks.append(atask)
@@ -66,9 +68,10 @@ class RawBlockFetcher:
         storage: list,
         block_numbers: list[int],
         positions: list[int],
+        include_transaction: bool
     ):
         responses = await self.client.get_block_by_number(
-            block_numbers=block_numbers, include_transaction=True
+            block_numbers=block_numbers, include_transaction=include_transaction
         )
         for position, response in zip(positions, responses):
             storage[position] = response["result"]
