@@ -72,7 +72,7 @@ class CompositeExtractor:
                 if entity_type in self.require_entity_types:
                     logger.info(f"Num {entity_type}: {len(self.exporter[entity_type])}")
 
-            self.exporter.exports(self.target_entity_types)
+            await self.exporter.exports(self.target_entity_types)
             self.exporter.clear_all()
 
     async def _enrich(self):

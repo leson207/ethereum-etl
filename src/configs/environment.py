@@ -19,6 +19,7 @@ class EnvironmentSettings(BaseSettings):
     DATABASE_NAME: str = Field(default_factory=str)
 
     KAFKA_SERVER: str
+    NATS_SERVER: str
 
     PROVIDER_URIS: list
     WEBSOCKET_URL: str

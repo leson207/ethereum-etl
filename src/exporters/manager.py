@@ -23,15 +23,15 @@ class ExportManager:
     def clear(self, key):
         self.data[key].clear()
 
-    def export_all(self):
+    async def export_all(self):
         for entity_type in self.data:
-            self.export(entity_type)
+            await self.export(entity_type)
 
-    def exports(self, entity_types: list[str]):
+    async def exports(self, entity_types: list[str]):
         for entity_type in entity_types:
-            self.export(entity_type)
+            await self.export(entity_type)
 
-    def export(self, entity_type: str):
+    async def export(self, entity_type: str):
         for exporter_type, exporter in self.mapper[entity_type].items():
             if exporter is None:
                 continue
@@ -39,4 +39,4 @@ class ExportManager:
             if exporter_type in ExporterType.DATABASE:
                 exporter.insert(self.data[entity_type], deduplicate="replace")
             else:
-                exporter.export(self.data[entity_type])
+                await exporter.export(self.data[entity_type])

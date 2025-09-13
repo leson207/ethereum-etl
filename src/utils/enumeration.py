@@ -35,13 +35,14 @@ class ExporterType:
     KAFKA = "kafka"
     KINESIS = "kinesis"
     PUBSUB = "pubsub"
+    NATS = "nats"
 
     GCS = "gcs"
     W3 = "w3"
     MINIO = "minio"
 
     DATABASE = [DUCKDB, SQLITE, CLICKHOUSE]
-    MESSAGE_QUEUE = [KAFKA, KINESIS, PUBSUB]
+    MESSAGE_QUEUE = [KAFKA, NATS, KINESIS, PUBSUB]
     DATALAKE = [GCS, W3, MINIO]
 
     @classmethod

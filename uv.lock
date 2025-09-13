@@ -165,6 +165,7 @@ dependencies = [
     { name = "httpx-ws" },
     { name = "kafka-python" },
     { name = "loguru" },
+    { name = "nats-py" },
     { name = "orjson" },
     { name = "pandas" },
     { name = "polars" },
@@ -185,6 +186,7 @@ requires-dist = [
     { name = "httpx-ws", specifier = ">=0.7.2" },
     { name = "kafka-python", specifier = ">=2.2.15" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "nats-py", specifier = ">=2.11.0" },
     { name = "orjson", specifier = ">=3.11.2" },
     { name = "pandas", specifier = ">=2.3.2" },
     { name = "polars", specifier = ">=1.33.1" },
@@ -358,6 +360,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979 },
 ]
+
+[[package]]
+name = "nats-py"
+version = "2.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/be/757c8af63596453daaa42cc21be51aa42fc6b23cc9d4347784f99c8357b5/nats_py-2.11.0.tar.gz", hash = "sha256:fb1097db8b520bb4c8f5ad51340ca54d9fa54dbfc4ecc81c3625ef80994b6100", size = 114186 }
 
 [[package]]
 name = "numpy"

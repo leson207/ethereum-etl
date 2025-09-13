@@ -9,7 +9,7 @@ from src.clients.rpc_client import RpcClient
 from src.extractors.composite import CompositeExtractor
 from src.logger import logger
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+# asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def parse_arg():
@@ -31,6 +31,10 @@ async def main(
     entity_types: list[str],
     exporter_types: list[str],
 ):
+    
+    from src.configs.nats_conn import nats_init
+    await nats_init()
+
     rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")

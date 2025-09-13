@@ -17,6 +17,8 @@ class EntityExporterMapper:
                 self.data[entity_type][exporter_type] = self.get_kafka(entity_type)
             case ExporterType.SQLITE:
                 self.data[entity_type][exporter_type] = self.get_sqlite(entity_type)
+            case ExporterType.NATS:
+                self.data[entity_type][exporter_type] = self.get_nats(entity_type)
 
     def get_sqlite(self, entity_type):
         match entity_type:
@@ -90,3 +92,11 @@ class EntityExporterMapper:
         from src.exporters.kafka_exporter import KafkaExporter
 
         return KafkaExporter(entity_tpye + env.ENVIRONMENT_NAME)
+
+    def get_nats(self, entity_type):
+        from src.exporters.nats_exporter import NatsExporter
+        from src.configs.environment import env
+
+        return NatsExporter(
+            "ETHEREUM" + env.ENVIRONMENT_NAME, f"ethereum.{entity_type}"
+        )
