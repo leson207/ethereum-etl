@@ -98,14 +98,21 @@ class CompositeExtractor:
 
         fetcher = RawBlockFetcher(client=self.rpc_client)
         block_numbers = range(params.batch_start_block, params.batch_end_block+1)
-        block_data = await fetcher.run(
-            block_numbers=block_numbers,
-            include_transaction=EntityType.TRANSACTION in self.require_entity_types,
-            initial=params.batch_start_block - params.start_block,
-            total=params.end_block - params.start_block + 1,
-            batch_size=params.batch_size,
-            show_progress=True,
-        )
+        for i in range(100):
+            block_data = await fetcher.run(
+                block_numbers=block_numbers,
+                include_transaction=EntityType.TRANSACTION in self.require_entity_types,
+                initial=params.batch_start_block - params.start_block,
+                total=params.end_block - params.start_block + 1,
+                batch_size=params.batch_size,
+                show_progress=True,
+            )
+            if block_data == [None]:
+                logger.info("Block data not exist! Try again!")
+                continue
+            else:
+                break
+
         raw_blocks = [
             {
                 "block_number" : block_number,

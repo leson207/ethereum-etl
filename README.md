@@ -49,6 +49,11 @@ python -m src.clis.historical --start-block 23000000 --end-block 23005000 \
 ```
 
 Realtime Mode: Subscribe to new events via an RPC WebSocket. As soon as a new block is detected, extract entities and forward them to the exporter.
+```
+python -m src.clis.realtime_ws \
+    --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
+    --exporter-types sqlite
+```
 
 # Client
 ## Design Principles
@@ -99,8 +104,9 @@ Note: Some cached data (e.g., WETH price) is primarily for testing when repeated
 # Future Work
 - Centralize connection: create connection manager for databases, message queues, objec tsore, ...
 - Calculate token price of a pool: Contruct a token graph for this. Algorithm for this task - shortest path - is supportted by any graph database but recommend memgraph for speed and rich set of algorithm.
-
-Token Price Calculation for Pools: Construct a token graph to calculate pool token prices. Algorithm for this task - shortest path - is supportted by any graph database but recommend memgraph for speed and rich set of algorithm.
+- Manual Realtime CLI: Add support for a polling-based realtime mode that continuously calls RPC instead of relying on WebSocket subscriptions.
+    - Motivation: If processing takes too long, events may be missed.
+    - More critical for Solana (short block times) than Ethereum (≈15s per block).
 
 # Disclaimer
 ⚠️ This project is under active development and may contain bugs.

@@ -9,7 +9,7 @@ from src.clients.rpc_client import RpcClient
 from src.extractors.composite import CompositeExtractor
 from src.logger import logger
 
-# asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def parse_arg():
