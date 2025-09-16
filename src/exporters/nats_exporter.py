@@ -34,9 +34,13 @@ class NatsExporter:
 
     async def export(self, items: list[dict]):
         for item in items:
-            await self.jetstream.publish(
-                subject=self.subject, payload=orjson.dumps(item)
-            )
+            try:
+                payload = orjson.dumps(item)
+            except TypeError:
+                import json
+                payload = json.dumps(item).encode()
+
+            await self.jetstream.publish(subject=self.subject, payload=payload) # TypeError: Integer exceeds 64-bit range
 
     async def close(self):
         await self.nats_conn.drain()
