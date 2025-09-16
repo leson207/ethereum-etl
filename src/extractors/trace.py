@@ -44,17 +44,34 @@ class TraceExtractor:
             return results
 
     def _extract(self, item: dict):
-        trace = Trace(
-            action=item["action"],
-            block_hash=item["blockHash"],
-            block_number=item["blockNumber"],
-            error=item.get("error"),
-            result=item["result"],
-            subtraces=item["subtraces"],
-            trace_address=item["traceAddress"],
-            transaction_hash=item["transactionHash"],
-            transaction_position=item["transactionPosition"],
-            type=item["type"],
-        )
+        try:
+            trace = Trace(
+                action=item["action"],
+                block_hash=item["blockHash"],
+                block_number=item["blockNumber"],
+                error=item.get("error"),
+                result=item["result"],
+                subtraces=item["subtraces"],
+                trace_address=item["traceAddress"],
+                transaction_hash=item.get("transactionHash"),
+                transaction_position=item.get("transactionPosition"),
+                type=item["type"],
+            )
+            return trace
+        except:
+            print(item)
+            raise
+        # trace = Trace(
+        #     action=item["action"],
+        #     block_hash=item["blockHash"],
+        #     block_number=item["blockNumber"],
+        #     error=item.get("error"),
+        #     result=item["result"],
+        #     subtraces=item["subtraces"],
+        #     trace_address=item["traceAddress"],
+        #     transaction_hash=item["transactionHash"],
+        #     transaction_position=item["transactionPosition"],
+        #     type=item["type"],
+        # )
 
         return trace

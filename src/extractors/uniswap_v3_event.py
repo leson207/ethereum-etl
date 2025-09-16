@@ -65,7 +65,6 @@ class UniswapV3EventExtractor:
 
         data = handler(log)
         if not data:
-            print("a")
             return None
 
         event = Event(

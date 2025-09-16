@@ -80,6 +80,9 @@ class CompositeExtractor:
             await self._enrich_event()
 
     async def _enrich_event(self):
+        if len(self.exporter[EntityType.EVENT])==0:
+            return
+
         from src.extractors.enrich import enrich_event
         enriched_event = await enrich_event(
             self.exporter[EntityType.EVENT],
@@ -356,8 +359,8 @@ class CompositeExtractor:
             if any("error" in i for i in balance):
                 continue
 
-            pool['token0_balance'] = int(balance[0]['result'],16)
-            pool['token1_balance'] = int(balance[1]['result'],16)
+            pool['token0_balance'] = int(balance[0]['result'],16) if balance[0]['result']!="0x" else 0
+            pool['token1_balance'] = int(balance[1]['result'],16) if balance[1]['result']!="0x" else 0
 
         self.exporter.add_items(EntityType.POOL, pools)
     
@@ -397,8 +400,8 @@ class CompositeExtractor:
                 "address": address,
                 "name": decode(name["result"]),
                 "symbol": decode(symbol["result"]),
-                "decimals": int(decimals["result"],16),
-                "total_supply": int(total_supply["result"], 16),
+                "decimals": int(decimals["result"], 16) if decimals["result"]!="0x" else 0,
+                "total_supply": int(total_supply["result"], 16) if total_supply["result"]!="0x" else 0
             }
             tokens.append(token)
         

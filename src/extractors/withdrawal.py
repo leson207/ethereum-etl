@@ -36,7 +36,7 @@ class WithdrawalExtractor:
             results = []
             for block in items:
                 block_number = block["number"]
-                for withdrawal in block["withdrawals"]:
+                for withdrawal in block.get("withdrawals", []):
                     withdrawal = self.extract(withdrawal, block_number=block_number)
                     results.append(withdrawal.model_dump())
 

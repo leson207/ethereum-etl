@@ -20,7 +20,7 @@ class RpcClient:
         timeout = httpx.Timeout(timeout=60)
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         }
         self.client = httpx.AsyncClient(
             headers=headers, http2=True, verify=False, timeout=timeout
@@ -79,37 +79,28 @@ class RpcClient:
         return await self.send_and_read(requests=requests)
 
     async def send_and_read(self, requests):
+        responses = await self.post(requests)
+        return responses
+
+    async def post(self, requests: str):
         payload = orjson.dumps(requests)
-        for attempt in range(5):
-            responses = await self.post(payload)
-
-        # response error retry
-        try:
-            responses = orjson.loads(
-                responses.content
-            )  # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
-            responses = sorted(responses, key=lambda response: response["id"])
-            if any(res["result"] is None for res in responses):
-                raise
-
-            return responses
-        except:
-            print(responses.content)
-            raise
-
-    async def post(self, payload: str):
         # network error retry
         for attempt in range(1, self.max_retries + 1):
             await self._backoff_event.wait()
 
             try:
                 responses = await self._post(payload)
-                logger.debug(f"Successfully processed {len(payload)} requests")
+                responses = orjson.loads(
+                    responses.content
+                )  # b'<html><body><h1>429 Too Many Requests</h1>\nYou have sent too many requests in a given amount of time.\n</body></html>\n'
+                responses = sorted(responses, key=lambda response: response["id"])
+                logger.debug(f"Successfully processed {len(requests)} requests")
                 return responses
             except Exception as e:
                 logger.warning(
-                    f"[Attempt {attempt}/{self.max_retries}] Failed to process {len(payload)} requests: {e}"
+                    f"[Attempt {attempt}/{self.max_retries}] Failed to process {len(requests)} requests: {e}"
                 )
+                print(responses)
                 if self._backoff_event.is_set():
                     async with self._lock:
                         if self._backoff_event.is_set():  # Double-checked locking (safe in Python because of GIL) https://en.wikipedia.org/wiki/Double-checked_locking
@@ -119,7 +110,7 @@ class RpcClient:
                             self._backoff_event.set()
 
         logger.error(
-            f"Giving up on requests after {self.max_retries} attempts: {len(payload)} request"
+            f"Giving up on requests after {self.max_retries} attempts: {len(requests)} request"
         )
         return None
 

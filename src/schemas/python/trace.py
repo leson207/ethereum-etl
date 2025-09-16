@@ -11,8 +11,8 @@ class Trace(BaseSchema):
     result: Optional[dict]
     subtraces: int
     trace_address: Optional[list[int]]
-    transaction_hash: str
-    transaction_position: int
+    transaction_hash: Optional[str]
+    transaction_position: Optional[int]
     type: str
 
     _num_fields = ("block_number", "subtraces", "transaction_position")

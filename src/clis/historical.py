@@ -32,8 +32,8 @@ async def main(
     exporter_types: list[str],
 ):
     
-    from src.configs.nats_conn import nats_init
-    await nats_init()
+    # from src.configs.nats_conn import nats_init
+    # await nats_init()
 
     rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()

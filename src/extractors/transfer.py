@@ -58,27 +58,16 @@ class TransferExtractor:
             return results
 
     def extract(self, item: dict):
-        from_address = "0x" + item["topics"][1][-40:]
-        to_address = "0x" + item["topics"][2][-40:]
-        if len(item["topics"]) == 4:
-            value = "0x" + item["topics"][3][-40:]
-        else:
-            value = item["data"]
-        hex_data = item["data"][2:]
-        data = [hex_data[i : i + 64] for i in range(0, len(hex_data), 64)]
+        params = item["topics"][1:]
+        for i in range((len(item['data'])-2)//64):
+            params.append(item['data'][2+i:2+i+64])
 
-        if len(hex_data) % 64 != 0:
-            print("7" * 100)
-            print(item)
-            print(len(hex_data))
+        if len(params)!=3:
             raise
 
-        if len(data) + len(item["topics"]) != 4:
-            print("8" * 100)
-            print(item)
-            raise
-
-        # TODO: clean here
+        from_address = "0x" + params[0][-40:]
+        to_address = "0x" + params[1][-40:]
+        value = params[2]
 
         transfer = Transfer(
             contract_address=item["address"],
