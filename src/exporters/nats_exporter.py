@@ -13,7 +13,6 @@ class NatsExporter:
 
     async def exist(self):
         stream_info = await self.jetstream.stream_info(self.stream)
-        # return self.subject in stream_info
         return (
             self.subject in stream_info.state.subjects
             and stream_info.state.subjects[self.subject] > 0

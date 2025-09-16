@@ -13,6 +13,7 @@ def get_env_filename():
 
 
 class EnvironmentSettings(BaseSettings):
+    NETWORK: str
     CLICKHOUSE_SERVER: str
     CLICKHOUSE_USERNAME: str
     CLICKHOUSE_PASSWORD:str

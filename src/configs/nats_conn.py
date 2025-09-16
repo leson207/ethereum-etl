@@ -1,5 +1,3 @@
-import asyncio
-
 import nats
 
 from src.configs.environment import env
@@ -13,7 +11,6 @@ async def nats_init():
     nats_conn = await nats.connect(env.NATS_SERVER)
     jetstream = nats_conn.jetstream()
 
-    name = "ETHEREUM" + env.ENVIRONMENT_NAME
-    await jetstream.add_stream(name=name, subjects=["ethereum.*"])
-    logger.info(f"Created stream '{name}'")
+    await jetstream.add_stream(name=env.DATABASE_NAME, subjects=[f"{env.NETWORK}.*"])
+    logger.info(f"Created stream '{env.DATABASE_NAME}'")
 

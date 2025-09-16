@@ -15,10 +15,10 @@ class EntityExporterMapper:
         match exporter_type:
             case ExporterType.KAFKA:
                 self.data[entity_type][exporter_type] = self.get_kafka(entity_type)
-            case ExporterType.SQLITE:
-                self.data[entity_type][exporter_type] = self.get_sqlite(entity_type)
             case ExporterType.NATS:
                 self.data[entity_type][exporter_type] = self.get_nats(entity_type)
+            case ExporterType.CLICKHOUSE:
+                self.data[entity_type][exporter_type] = self.get_clickhouse(entity_type)
 
     def get_sqlite(self, entity_type):
         match entity_type:
@@ -88,14 +88,21 @@ class EntityExporterMapper:
 
                 return TraceRepository()
 
+    def get_clickhouse(self, entity_type):
+        match entity_type:
+            case EntityType.EVENT:
+                from src.repositories.clickhouse.event import EventRepository
+
+                return EventRepository()
+
     def get_kafka(self, entity_tpye):
         from src.exporters.kafka_exporter import KafkaExporter
 
         return KafkaExporter(entity_tpye + env.ENVIRONMENT_NAME)
 
     def get_nats(self, entity_type):
-        from src.exporters.nats_exporter import NatsExporter
         from src.configs.environment import env
+        from src.exporters.nats_exporter import NatsExporter
 
         return NatsExporter(
             "ETHEREUM" + env.ENVIRONMENT_NAME, f"ethereum.{entity_type}"
