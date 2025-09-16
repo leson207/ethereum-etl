@@ -1,7 +1,7 @@
 # Introduction
 The main goal of this project is to create an Ethereum ETL codebase that anyone can easily clone and customize. It is inspired by the original ethereum-etl project (https://github.com/blockchain-etl/ethereum-etl).
 
-Key Improvements Over the Original Ethereum-ETL:
+**Key Improvements Over the Original Ethereum-ETL:**
 - Modern Python: Built with Python 3.13.7, removing the legacy Python 2 constraints.
 - Better Memory Efficiency: Benefits from improvements in modern Python versions.
 - Faster Requests: Utilizes asynchronous programming instead of threads.
@@ -11,12 +11,12 @@ Key Improvements Over the Original Ethereum-ETL:
 - Improved Design: Cleaner architecture for easier maintenance and extension.
 - Richer information: More data from many source (binance, etherscan, 4byte)
 
-Workflow Overview:
+**Workflow Overview:**
 - Data Collection: Fetch online data from multiple sources.
 - Extraction & Enrichment: Process and enhance the raw data.
 - Exporting: Send the processed data to the designated exporter.
 
-Customization Points:
+**Customization Points:**
 - Pick URI Strategy
 - Schema
 - Exporter
@@ -64,7 +64,8 @@ python -m src.clis.realtime_ws \
 - RawReceipt: for object store
 - Receipt
 - Log
-- Pool:
+- Transfer
+- Pool
 - Token
 - Event: Create, mint, swap, burn for uniswapv2-like and uniswapv3-like: Erich using block, pool, token
 - Account: wallet address
