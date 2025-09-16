@@ -7,6 +7,7 @@ Key Improvements Over the Original Ethereum-ETL:
 - Faster Requests: Utilizes asynchronous programming instead of threads.
 - Batch Processing: Supports batch requests instead of single requests for higher throughput.
 - Optimized Querying: Fetches receipts by block instead of individual transactions.
+- Faster Json operation: Use orjson over json.
 - Improved Design: Cleaner architecture for easier maintenance and extension.
 - Richer information: More data from many source (binance, etherscan, 4byte)
 
@@ -45,15 +46,32 @@ Historical Mode: Extract data from an RPC block range, process entities, and sen
 python -m src.clis.historical --start-block 23000000 --end-block 23005000 \
     --process-batch-size 1000 --request-batch-size 30 \
     --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
-    --exporter-types sqlite
+    --exporter-types nats,sqlite
 ```
 
 Realtime Mode: Subscribe to new events via an RPC WebSocket. As soon as a new block is detected, extract entities and forward them to the exporter.
 ```
 python -m src.clis.realtime_ws \
     --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
-    --exporter-types sqlite
+    --exporter-types nats,sqlite
 ```
+
+# Entity
+- RawBlock: for object store
+- Block: raw block data + eth price from binance
+- Transaction
+- Withdrawal
+- RawReceipt: for object store
+- Receipt
+- Log
+- Pool:
+- Token
+- Event: Create, mint, swap, burn for uniswapv2-like and uniswapv3-like: Erich using block, pool, token
+- Account: wallet address
+- Contract: from etherscan
+- ABI: from contract
+- RawTrace: for object store
+- Trace
 
 # Client
 ## Design Principles
@@ -107,7 +125,7 @@ Note: Some cached data (e.g., WETH price) is primarily for testing when repeated
 - Manual Realtime CLI: Add support for a polling-based realtime mode that continuously calls RPC instead of relying on WebSocket subscriptions.
     - Motivation: If processing takes too long, events may be missed.
     - More critical for Solana (short block times) than Ethereum (≈15s per block).
-
+- Get eth price using batch if it timestamp follow block timestamp
 # Disclaimer
 ⚠️ This project is under active development and may contain bugs.
 
