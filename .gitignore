@@ -10,3 +10,5 @@ wheels/
 .venv
 artifacts
 system/volumes
+.env
+json
