@@ -6,8 +6,8 @@ import sqlalchemy as sa
 from sqlalchemy import text
 from tabulate import tabulate
 
-from src.configs.sqlite import session
 from src.configs.environment import env
+from src.configs.sqlite import session
 from src.logger import logger
 
 
@@ -29,7 +29,9 @@ class BaseRepository:
 
     def inspect(self):
         # Show existing tables
-        res = self.db.execute(text("SELECT name, type FROM sqlite_master WHERE type IN ('table','view');"))
+        res = self.db.execute(
+            text("SELECT name, type FROM sqlite_master WHERE type IN ('table','view');")
+        )
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         # Show row data
@@ -43,7 +45,11 @@ class BaseRepository:
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         # Show table schema
-        res = self.db.execute(text(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{self.table_name}';"))
+        res = self.db.execute(
+            text(
+                f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{self.table_name}';"
+            )
+        )
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
         res = self.db.execute(text(f"PRAGMA table_info('{self.table_name}');"))
@@ -142,7 +148,8 @@ class BaseRepository:
         if restore:
             self.restore(mode="latest")
 
-    def insert(self, data: List[Dict], deduplicate: str = None):
+    # sqlite not thread safe so mark this function as async to make sure it run on the same thread when execute dag
+    async def insert(self, data: List[Dict], deduplicate: str = None):
         if not data:
             logger.warning(
                 f"No data provided to insert into {self.table_name}. Skipping."

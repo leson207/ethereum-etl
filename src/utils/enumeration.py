@@ -1,4 +1,4 @@
-class EntityType:
+class Entity:
     RAW_BLOCK = "raw_block"
     BLOCK = "block"
     TRANSACTION = "transaction"
@@ -27,7 +27,7 @@ class EntityType:
         ]
 
 
-class ExporterType:
+class Exporter:
     DUCKDB = "duckdb"
     SQLITE = "sqlite"
     CLICKHOUSE = "clickhouse"
