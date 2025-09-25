@@ -28,21 +28,18 @@ class Entity:
 
 
 class Exporter:
-    DUCKDB = "duckdb"
     SQLITE = "sqlite"
     CLICKHOUSE = "clickhouse"
 
     KAFKA = "kafka"
-    KINESIS = "kinesis"
-    PUBSUB = "pubsub"
     NATS = "nats"
 
     GCS = "gcs"
     W3 = "w3"
     MINIO = "minio"
 
-    DATABASE = [DUCKDB, SQLITE, CLICKHOUSE]
-    MESSAGE_QUEUE = [KAFKA, NATS, KINESIS, PUBSUB]
+    DATABASE = [SQLITE, CLICKHOUSE]
+    MESSAGE_QUEUE = [KAFKA, NATS]
     DATALAKE = [GCS, W3, MINIO]
 
     @classmethod

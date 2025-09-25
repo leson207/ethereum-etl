@@ -29,7 +29,7 @@ async def export_withdrawal(results, **kwargs):
     await repo.insert(results[Entity.WITHDRAWAL], deduplicate="replace")
 
 
-entity_func = {
+entity_task = {
     Entity.RAW_BLOCK: export_raw_block,
     Entity.BLOCK: export_block,
     Entity.TRANSACTION: export_transaction,

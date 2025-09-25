@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from rich.progress import Progress, TaskID
 
-from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
+from src.tasks.export.export_sqlite import entity_task as sqlite_entity_task
 from src.tasks.fetch.raw_block import fetch_raw_block
 from src.tasks.finish import finish
 from src.tasks.parse.block import parse_block
@@ -10,20 +10,20 @@ from src.tasks.parse.transaction import parse_transaction
 from src.tasks.parse.withdrawal import parse_withdrawal
 from src.utils.enumeration import Entity, Exporter
 
-entity_func = {
+entity_task = {
     Entity.RAW_BLOCK: [fetch_raw_block],
     Entity.BLOCK: [parse_block],
     Entity.TRANSACTION: [parse_transaction],
     Entity.WITHDRAWAL: [parse_withdrawal],
 }
-func_func = {
+task_task = {
     fetch_raw_block: [],
     parse_block: [fetch_raw_block],
     parse_transaction: [fetch_raw_block],
     parse_withdrawal: [fetch_raw_block],
 }
 
-exporter_entity_func = {Exporter.SQLITE: sqlite_entity_func}
+exporter_entity_task = {Exporter.SQLITE: sqlite_entity_task}
 
 
 def create_task(
@@ -47,33 +47,33 @@ def create_task(
         "include_transaction": True,
     }
 
-    required_funcs = set()
+    required_tasks = set()
     for entity in entities:
-        required_funcs.update(entity_func[entity])
+        required_tasks.update(entity_task[entity])
 
-    required_funcs = list(required_funcs)
+    required_tasks = list(required_tasks)
 
     all_task_names = []
-    for func in required_funcs:
-        dep_funcs = func_func[func]
-        dep_names = [f"{dag_id}_{dep.__name__}" for dep in dep_funcs]
-        for dep in dep_funcs:
-            if dep not in required_funcs:
-                required_funcs.append(dep)
+    for task in required_tasks:
+        dep_tasks = task_task[task]
+        dep_names = [f"{dag_id}_{dep.__name__}" for dep in dep_tasks]
+        for dep in dep_tasks:
+            if dep not in required_tasks:
+                required_tasks.append(dep)
 
-        name = f"{dag_id}_{func.__name__}"
+        name = f"{dag_id}_{task.__name__}"
         all_task_names.append(name)
-        tasks[name] = (func, params, dep_names)
+        tasks[name] = (task, params, dep_names)
 
     for exporter in exporters:
         for entity in entities:
-            func = exporter_entity_func[exporter][entity]
-            dep_funcs = entity_func[entity]
-            dep_names = [f"{dag_id}_{dep.__name__}" for dep in dep_funcs]
+            task = exporter_entity_task[exporter][entity]
+            dep_tasks = entity_task[entity]
+            dep_names = [f"{dag_id}_{dep.__name__}" for dep in dep_tasks]
 
-            name = f"{dag_id}_{exporter}_{func.__name__}"
+            name = f"{dag_id}_{exporter}_{task.__name__}"
             all_task_names.append(name)
-            tasks[name] = (func, params, dep_names)
+            tasks[name] = (task, params, dep_names)
 
     tasks[f"{dag_id}_finish"] = (finish, params, all_task_names)
 
