@@ -148,8 +148,7 @@ class BaseRepository:
         if restore:
             self.restore(mode="latest")
 
-    # sqlite not thread safe so mark this function as async to make sure it run on the same thread when execute dag
-    async def insert(self, data: List[Dict], deduplicate: str = None):
+    def insert(self, data: List[Dict], deduplicate: str = None):
         if not data:
             logger.warning(
                 f"No data provided to insert into {self.table_name}. Skipping."

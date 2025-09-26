@@ -1,11 +1,14 @@
-from dataclasses import dataclass, field
-from typing import Callable
+from asyncio import Task
+from dataclasses import dataclass
+from typing import Callable, Optional
 
 
 @dataclass
 class Node:
     name: str
-    task: Callable
-    kwargs: dict = field(default_factory=dict)
-    dep_tasks: list[str] = field(default_factory=list)
-    dep_data: list[str] = field(default_factory=list)
+    func: Callable
+    kwargs: dict
+    task: Optional[Task]
+    dep_nodes: list[str]
+    dep_data: list[str]
+    status: str

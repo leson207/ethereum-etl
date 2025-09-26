@@ -13,5 +13,5 @@ only use rpc client - should use binance cause it give us a resone to use cache 
 group a mini dag some way
 finnish return task to delete in done
 # Dev:
-- create dag and add to pendding
-- test it
+- receipt and derevative
+- use closest dependence: log from receipt not raw_receipt

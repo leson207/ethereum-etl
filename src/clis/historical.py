@@ -1,8 +1,5 @@
 import argparse
 import asyncio
-import contextvars
-import functools
-import inspect
 from concurrent.futures import ThreadPoolExecutor
 
 import uvloop
@@ -17,7 +14,8 @@ from rich.progress import (
 
 from src.clients.rpc_client import RpcClient
 from src.logger import logger
-from src.tasks.dag import create_task
+from src.tasks.dag import create_node
+from src.tasks.graph import Graph
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -34,14 +32,6 @@ def parse_arg():
     return parser.parse_args()
 
 
-async def to_thread(func, /, *args, executor=None, **kwargs):
-    loop = asyncio.get_running_loop()
-    ctx = contextvars.copy_context()
-    func_call = functools.partial(ctx.run, func, *args, **kwargs)
-
-    return await loop.run_in_executor(executor, func_call)
-
-
 async def main(
     start_block: int,
     end_block: int,
@@ -52,7 +42,7 @@ async def main(
     num_workers: int,
 ):
     # Init connection manager
-    # Prepare exporter?
+    graph = Graph()
     rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
@@ -72,19 +62,15 @@ async def main(
                 )
                 batch_start_block = start_block
 
-                # should i group 3 of them into something
-                pending = {}  # {name: (func, args, dependencies)}
-                running = {}  # {name: task}
-                done = {}  # {name: bool}
                 while progress.tasks[task_id].completed < end_block - start_block + 1:
                     if (
-                        len(pending) < process_batch_size
+                        graph.pending_count < process_batch_size
                         and batch_start_block <= end_block
                     ):
                         batch_end_block = min(
                             batch_start_block + request_batch_size - 1, end_block
                         )
-                        new_tasks = create_task(
+                        new_nodes = create_node(
                             progress,
                             task_id,
                             rpc_client,
@@ -95,33 +81,9 @@ async def main(
                         )
                         batch_start_block = batch_start_block + request_batch_size
 
-                        for i in new_tasks:
-                            print(i)
-                            print(new_tasks[i][2])
+                        graph.add_nodes(new_nodes)
 
-                        print()
-                        # return
-                        pending.update(new_tasks)
-                    # return
-                    for task_name, task in list(running.items()):
-                        if task.done():
-                            done[task_name] = True
-                            del running[task_name]
-
-                    for name, (func, kwargs, dependencies) in list(pending.items()):
-                        if dependencies and not all(
-                            dep in done for dep in dependencies
-                        ):
-                            continue
-
-                        if inspect.iscoroutinefunction(func):
-                            coro = func(**kwargs)
-                        else:
-                            coro = to_thread(func, executor=pool, **kwargs)
-
-                        task = tg.create_task(coro, name=name)
-                        running[name] = task
-                        del pending[name]
+                    await graph.run(tg, pool)
 
                     await asyncio.sleep(0.1)
 
