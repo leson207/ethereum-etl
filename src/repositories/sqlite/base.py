@@ -7,8 +7,9 @@ from sqlalchemy import text
 from tabulate import tabulate
 
 from src.configs.environment import env
-from src.configs.sqlite import session
 from src.logger import logger
+from src.configs.connection_manager import connection_manager
+from src.utils.enumeration import Exporter
 
 
 class BaseRepository:
@@ -17,7 +18,7 @@ class BaseRepository:
         sql_schema: Type,
         python_schema: Type,
     ):
-        self.db = session
+        self.db = connection_manager[Exporter.SQLITE]
         self.sql_schema = sql_schema
         self.python_schema = python_schema
         self.table_name = sql_schema.__tablename__

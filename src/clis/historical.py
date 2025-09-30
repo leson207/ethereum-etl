@@ -13,6 +13,7 @@ from rich.progress import (
 )
 
 from src.clients.rpc_client import RpcClient
+from src.configs.connection_manager import connection_manager
 from src.logger import logger
 from src.tasks.dag import create_node
 from src.tasks.graph import Graph
@@ -43,11 +44,11 @@ async def main(
     exporters: list[str],
     num_workers: int,
 ):
-    # Init connection manager
-    graph = Graph()
+    await connection_manager.init(exporters)
     rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
+    graph = Graph()
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         async with asyncio.TaskGroup() as tg:
@@ -91,7 +92,7 @@ async def main(
                     await asyncio.sleep(0.1)
 
     await rpc_client.close()
-    # connection manager close here
+    await connection_manager.close()
 
 
 if __name__ == "__main__":
