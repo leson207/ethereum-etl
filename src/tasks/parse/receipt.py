@@ -1,30 +1,28 @@
-from src.schemas.python.receipt import Receipt
-from src.utils.enumeration import EntityType
+from src.utils.common import hex_to_dec
+from src.utils.enumeration import Entity
 
 
-def parse_receipt(results):
-    for block_receipt in results[EntityType.RAW_RECEIPT]:
-        for raw_receipt in block_receipt["data"]:
-            receipt = parse(raw_receipt)
-            results[EntityType.RECEIPT].append(receipt)
+def parse_receipt(results: dict[str, list], **kwargs):
+    for raw_receipt in results[Entity.RAW_RECEIPT]:
+        receipt = parse(raw_receipt["data"])
+        results[Entity.RECEIPT].append(receipt)
 
 
 def parse(item: dict):
-    receipt = Receipt(
-        block_hash=item.get("blockHash"),
-        block_number=item.get("blockNumber"),
-        contract_address=item.get("contractAddress"),
-        cumulative_gas_used=item.get("cumulativeGasUsed"),
-        from_address=item.get("from"),
-        gas_used=item.get("gasUsed"),
-        effective_gas_price=item.get("effectiveGasPrice"),
-        log_count=len(item.get("logs", [])),
-        logs_bloom=item.get("logsBloom"),
-        status=item.get("status"),
-        to_address=item.get("to"),
-        transaction_hash=item.get("transactionHash"),
-        transaction_index=item.get("transactionIndex"),
-        type=item.get("type"),
-    )
-
-    return receipt.model_dump()
+    receipt = {
+        "block_hash": item["blockHash"],
+        "block_number": hex_to_dec(item["blockNumber"]),
+        "contract_address": item["contractAddress"],
+        "cumulative_gas_used": item["cumulativeGasUsed"],
+        "from_address": item["from"],
+        "gas_used": item["gasUsed"],
+        "effective_gas_price": item["effectiveGasPrice"],
+        "log_count": len(item.get("logs", [])),
+        "logs_bloom": item["logsBloom"],
+        "status": hex_to_dec(item["status"]),
+        "to_address": item["to"],
+        "transaction_hash": item["transactionHash"],
+        "transaction_index": item["transactionIndex"],
+        "type": item["type"],
+    }
+    return receipt

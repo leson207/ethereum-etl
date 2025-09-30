@@ -4,10 +4,10 @@ from src.utils.enumeration import Entity
 
 async def fetch_raw_block(
     client: RpcClient,
-    results: dict,
+    results: dict[str, list],
     block_numbers: list[int],
     include_transaction: bool,
-    **kwargs,
+    **kwargs
 ):
     responses = await client.get_block_by_number(
         block_numbers=block_numbers, include_transaction=include_transaction

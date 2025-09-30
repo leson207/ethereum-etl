@@ -3,12 +3,20 @@ from collections import defaultdict
 from rich.progress import Progress, TaskID
 
 from src.schemas.node import Node
-from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
+
 from src.tasks.fetch.raw_block import fetch_raw_block
-from src.tasks.finish import finish
 from src.tasks.parse.block import parse_block
 from src.tasks.parse.transaction import parse_transaction
 from src.tasks.parse.withdrawal import parse_withdrawal
+
+from src.tasks.fetch.raw_receipt import fetch_raw_receipt
+from src.tasks.parse.receipt import parse_receipt
+from src.tasks.parse.log import parse_log
+
+from src.tasks.finish import finish
+
+from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
+
 from src.utils.enumeration import Entity, Exporter
 
 entity_func = {
@@ -16,12 +24,20 @@ entity_func = {
     Entity.BLOCK: [parse_block],
     Entity.TRANSACTION: [parse_transaction],
     Entity.WITHDRAWAL: [parse_withdrawal],
+    
+    Entity.RAW_RECEIPT: [fetch_raw_receipt],
+    Entity.RECEIPT: [parse_receipt],
+    Entity.LOG: [parse_log]
 }
 func_func = {
     fetch_raw_block: [],
     parse_block: [fetch_raw_block],
     parse_transaction: [fetch_raw_block],
     parse_withdrawal: [fetch_raw_block],
+
+    fetch_raw_receipt: [],
+    parse_receipt: [fetch_raw_receipt],
+    parse_log: [fetch_raw_receipt]
 }
 
 exporter_entity_func = {Exporter.SQLITE: sqlite_entity_func}
@@ -45,7 +61,7 @@ def create_node(
         "client": rpc_client,
         "block_numbers": range(start_block, end_block + 1),
         "batch_size": end_block - start_block + 1,
-        "include_transaction": True,  # fix this
+        "include_transaction": True,  # TODO: fix this
     }
 
     required_funcs = set()

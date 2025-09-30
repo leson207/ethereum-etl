@@ -30,10 +30,31 @@ async def export_withdrawal(results, **kwargs):
     repo = WithdrawalRepository()
     repo.insert(results[Entity.WITHDRAWAL], deduplicate="replace")
 
+async def export_raw_receipt(results, **kwargs):
+    from src.repositories.sqlite.raw_receipt import RawReceiptRepository
+
+    repo = RawReceiptRepository()
+    repo.insert(results[Entity.RAW_RECEIPT], deduplicate="replace")
+
+async def export_receipt(results, **kwargs):
+    from src.repositories.sqlite.receipt import ReceiptRepository
+
+    repo = ReceiptRepository()
+    repo.insert(results[Entity.RECEIPT], deduplicate="replace")
+
+async def export_log(results, **kwargs):
+    from src.repositories.sqlite.log import LogRepository
+
+    repo = LogRepository()
+    repo.insert(results[Entity.LOG], deduplicate="replace")
 
 entity_func = {
     Entity.RAW_BLOCK: export_raw_block,
     Entity.BLOCK: export_block,
     Entity.TRANSACTION: export_transaction,
     Entity.WITHDRAWAL: export_withdrawal,
+
+    Entity.RAW_RECEIPT: export_raw_receipt,
+    Entity.RECEIPT: export_receipt,
+    Entity.LOG: export_log
 }

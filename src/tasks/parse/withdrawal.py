@@ -2,7 +2,7 @@ from src.utils.common import hex_to_dec
 from src.utils.enumeration import Entity
 
 
-def parse_withdrawal(results, **kwargs):
+def parse_withdrawal(results: dict[str, list], **kwargs):
     for raw_block in results[Entity.RAW_BLOCK]:
         block_number = hex_to_dec(raw_block["data"]["number"])
         for raw_withdrawal in raw_block["data"].get("withdrawals", []):
