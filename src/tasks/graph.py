@@ -23,6 +23,7 @@ class Graph:
         # self.running_sync_count = 0
         # self.running_async_count = 0
         self.pending_count = 0
+        self.running_count = 0
 
     def add_nodes(self, new_nodes):
         self.nodes.update(new_nodes)
@@ -32,6 +33,7 @@ class Graph:
         for name, node in list(self.nodes.items()):
             if node.status == "running" and node.task.done():
                 node.status = "done"
+                self.running_count = self.running_count - 1
                 if "finish" in name:
                     for i in node.dep_nodes:
                         del self.nodes[i]
@@ -55,3 +57,4 @@ class Graph:
             node.task = task_group.create_task(coro, name=name)
             node.status = "running"
             self.pending_count = self.pending_count - 1
+            self.running_count = self.running_count + 1

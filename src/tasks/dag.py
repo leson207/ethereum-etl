@@ -65,6 +65,7 @@ def create_node(
         node_name = f"{dag_id}_{func.__name__}"
         all_node_names.append(node_name)
         nodes[node_name] = Node(
+            dag_id=dag_id,
             name=node_name,
             func=func,
             kwargs=params,
@@ -83,6 +84,7 @@ def create_node(
             node_name = f"{dag_id}_{exporter}_{func.__name__}"
             all_node_names.append(node_name)
             nodes[node_name] = Node(
+                dag_id=dag_id,
                 name=node_name,
                 func=func,
                 kwargs=params,
@@ -93,6 +95,7 @@ def create_node(
             )
 
     nodes[f"{dag_id}_finish"] = Node(
+        dag_id=dag_id,
         name=f"{dag_id}_finish",
         func=finish,
         kwargs=params,

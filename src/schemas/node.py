@@ -5,6 +5,7 @@ from typing import Callable, Optional
 
 @dataclass
 class Node:
+    dag_id: str
     name: str
     func: Callable
     kwargs: dict

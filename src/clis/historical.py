@@ -24,8 +24,9 @@ def parse_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument("--start-block", type=int)
     parser.add_argument("--end-block", type=int)
-    parser.add_argument("--process-batch-size", type=int, default=1000)
     parser.add_argument("--request-batch-size", type=int, default=30)
+    parser.add_argument("--pending-queue-size", type=int, default=1000)
+    parser.add_argument("--running-queue-size", type=int, default=1000)
     parser.add_argument("--entities", type=str, default=None)
     parser.add_argument("--exporters", type=str, default=None)
     parser.add_argument("--num-workers", type=str, default=4)
@@ -35,8 +36,9 @@ def parse_arg():
 async def main(
     start_block: int,
     end_block: int,
-    process_batch_size: int,
     request_batch_size: int,
+    pending_queue_size: int,
+    running_queue_size: int,
     entities: list[str],
     exporters: list[str],
     num_workers: int,
@@ -64,7 +66,7 @@ async def main(
 
                 while progress.tasks[task_id].completed < end_block - start_block + 1:
                     if (
-                        graph.pending_count < process_batch_size
+                        graph.pending_count < pending_queue_size
                         and batch_start_block <= end_block
                     ):
                         batch_end_block = min(
@@ -83,7 +85,8 @@ async def main(
 
                         graph.add_nodes(new_nodes)
 
-                    await graph.run(tg, pool)
+                    if graph.running_count < running_queue_size:
+                        await graph.run(tg, pool)
 
                     await asyncio.sleep(0.1)
 
@@ -100,8 +103,9 @@ if __name__ == "__main__":
             main(
                 args.start_block,
                 args.end_block,
-                args.process_batch_size,
                 args.request_batch_size,
+                args.pending_queue_size,
+                args.running_queue_size,
                 entities,
                 exporters,
                 args.num_workers,
@@ -113,4 +117,6 @@ if __name__ == "__main__":
 #     --entities raw_block,block \
 #     --exporters sqlite
 
-# python -m src.clis.historical --start-block 23170000 --end-block 23170030 --process-batch-size 100 --request-batch-size 30 --entities raw_block,block,transaction,withdrawal --exporters sqlite
+# python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
+# --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
+# --entities raw_block,block,transaction,withdrawal --exporters sqlite
