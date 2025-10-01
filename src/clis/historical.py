@@ -114,15 +114,13 @@ if __name__ == "__main__":
         )
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-#     --process-batch-size 100 --request-batch-size 30 \
-#     --entities raw_block,block \
-#     --exporters sqlite
-
-# python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
 # --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
 # --entities raw_block,block,transaction,withdrawal --exporters sqlite
-
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
 # --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
 # --entities raw_receipt,receipt,log --exporters sqlite
+
+# python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
+# --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
+# --entities raw_trace,trace --exporters sqlite

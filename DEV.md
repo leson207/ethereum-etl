@@ -15,5 +15,6 @@ token-graph
 more precise schema when parser and in sqlite, sql_table
 
 # Dev:
-- receipt and derevative
-- use closest dependence: log from receipt not raw_receipt
+- account, pool, token, transfer, event
+- account balance
+- eth price

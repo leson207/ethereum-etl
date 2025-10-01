@@ -13,6 +13,9 @@ from src.tasks.fetch.raw_receipt import fetch_raw_receipt
 from src.tasks.parse.receipt import parse_receipt
 from src.tasks.parse.log import parse_log
 
+from src.tasks.fetch.raw_trace import fetch_raw_trace
+from src.tasks.parse.trace import parse_trace
+
 from src.tasks.finish import finish
 
 from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
@@ -27,7 +30,10 @@ entity_func = {
     
     Entity.RAW_RECEIPT: [fetch_raw_receipt],
     Entity.RECEIPT: [parse_receipt],
-    Entity.LOG: [parse_log]
+    Entity.LOG: [parse_log],
+
+    Entity.RAW_TRACE: [fetch_raw_trace],
+    Entity.TRACE: [parse_trace]
 }
 func_func = {
     fetch_raw_block: [],
@@ -37,7 +43,10 @@ func_func = {
 
     fetch_raw_receipt: [],
     parse_receipt: [fetch_raw_receipt],
-    parse_log: [fetch_raw_receipt]
+    parse_log: [fetch_raw_receipt],
+
+    fetch_raw_trace: [],
+    parse_trace: [fetch_raw_trace]
 }
 
 exporter_entity_func = {Exporter.SQLITE: sqlite_entity_func}
