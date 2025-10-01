@@ -1,12 +1,12 @@
 from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input
-from src.schemas.python.event import Event
-from src.utils.enumeration import EntityType
+from src.utils.enumeration import Entity
 
 
-def parse_uniswap_v2_event(results):
-    for log in results[EntityType.LOG]:
+def parse_uniswap_v2_event(results: dict[str, list], **kwargs):
+    for log in results[Entity.LOG]:
         event = parse(log)
-        results[EntityType.EVENT].append(event)
+        if event:
+            results[Entity.EVENT].append(event)
 
 
 # https://ethereum.stackexchange.com/questions/12553/understanding-logs-and-log-blooms
@@ -15,37 +15,29 @@ def parse(log: dict):
     if not topics:
         return None
 
-    data = None
+    event = None
 
     match topics[0].casefold():
         case sig if (
             sig == EVENT_HEX_SIGNATURES["uniswap_v2"]["pair_created"].casefold()
         ):
-            data = _extract_pair_created(log)
+            event = _extract_pair_created(log)
         case sig if sig == EVENT_HEX_SIGNATURES["uniswap_v2"]["mint"].casefold():
-            data = _extract_mint(log)
+            event = _extract_mint(log)
         case sig if sig == EVENT_HEX_SIGNATURES["uniswap_v2"]["burn"].casefold():
-            data = _extract_burn(log)
+            event = _extract_burn(log)
         case sig if sig == EVENT_HEX_SIGNATURES["uniswap_v2"]["swap"].casefold():
-            data = _extract_swap(log)
+            event = _extract_swap(log)
         case _:
             return None
 
-    if not data:
+    if not event:
         return None
 
-    event = Event(
-        type=data["type"],
-        dex=data["dex"],
-        pool_address=data["pool_address"],
-        amount0_in=data["amount0_in"],
-        amount1_in=data["amount1_in"],
-        amount0_out=data["amount0_out"],
-        amount1_out=data["amount1_out"],
-        transaction_hash=log["transaction_hash"],
-        log_index=log["log_index"],
-        block_number=log["block_number"],
-    )
+    event["transaction_hash"] = log["transaction_hash"]
+    event["log_index"] = log["log_index"]
+    event["block_number"] = log["block_number"]
+
     return event
 
 
@@ -104,8 +96,8 @@ def _extract_swap(log):
     if not decode:
         return None
 
-    # amount0In can amount0Out can both !=0
-    # amount1In can amount1Out can both !=0
+    # amount0In and amount0Out can both !=0
+    # amount1In and amount1Out can both !=0
     return {
         "type": "swap",
         "dex": "uniswap_v2",

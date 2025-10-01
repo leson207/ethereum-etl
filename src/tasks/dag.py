@@ -12,6 +12,9 @@ from src.tasks.parse.withdrawal import parse_withdrawal
 from src.tasks.fetch.raw_receipt import fetch_raw_receipt
 from src.tasks.parse.receipt import parse_receipt
 from src.tasks.parse.log import parse_log
+from src.tasks.parse.transfer import parse_transfer
+from src.tasks.parse.uniswap_v2_event import parse_uniswap_v2_event
+from src.tasks.parse.uniswap_v3_event import parse_uniswap_v3_event
 
 from src.tasks.fetch.raw_trace import fetch_raw_trace
 from src.tasks.parse.trace import parse_trace
@@ -31,6 +34,8 @@ entity_func = {
     Entity.RAW_RECEIPT: [fetch_raw_receipt],
     Entity.RECEIPT: [parse_receipt],
     Entity.LOG: [parse_log],
+    Entity.TRANSFER: [parse_transfer],
+    Entity.EVENT: [parse_uniswap_v2_event, parse_uniswap_v3_event],
 
     Entity.RAW_TRACE: [fetch_raw_trace],
     Entity.TRACE: [parse_trace]
@@ -44,6 +49,9 @@ func_func = {
     fetch_raw_receipt: [],
     parse_receipt: [fetch_raw_receipt],
     parse_log: [fetch_raw_receipt],
+    parse_transfer: [parse_log],
+    parse_uniswap_v2_event: [parse_log],
+    parse_uniswap_v3_event: [parse_log],
 
     fetch_raw_trace: [],
     parse_trace: [fetch_raw_trace]

@@ -51,6 +51,18 @@ async def export_log(results: dict[str, list], **kwargs):
     repo = LogRepository()
     repo.insert(results[Entity.LOG], deduplicate="replace")
 
+async def export_transfer(results: dict[str, list], **kwargs):
+    from src.repositories.sqlite.transfer import TransferRepository
+
+    repo = TransferRepository()
+    repo.insert(results[Entity.TRANSFER], deduplicate="replace")
+
+async def export_event(results: dict[str, list], **kwargs):
+    from src.repositories.sqlite.event import EventRepository
+
+    repo = EventRepository()
+    repo.insert(results[Entity.EVENT], deduplicate="replace")
+
 async def export_raw_trace(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.raw_trace import RawTraceRepository
 
@@ -72,6 +84,8 @@ entity_func = {
     Entity.RAW_RECEIPT: export_raw_receipt,
     Entity.RECEIPT: export_receipt,
     Entity.LOG: export_log,
+    Entity.TRANSFER: export_transfer,
+    Entity.EVENT: export_event,
 
     Entity.RAW_TRACE: export_raw_trace,
     Entity.TRACE: export_trace

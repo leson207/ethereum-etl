@@ -13,8 +13,12 @@ eth-price
 token-graph
 
 more precise schema when parser and in sqlite, sql_table
-
+more etl term: map, reduce, aggreate, ingest, .. 
+empty to none?
+normlaize address
+better parse log: may be just transfer, 
 # Dev:
-- account, pool, token, transfer, event
-- account balance
+- transfer, event
+- account, pool, token offline
+- account, pool, token online
 - eth price
