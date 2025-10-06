@@ -19,7 +19,7 @@ class PoolRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS '{table_name}'
             (
-                pool_address    TEXT,
+                address    TEXT,
                 token0_address  TEXT,
                 token1_address  TEXT,
                 token0_balance  HUGEUINT,
@@ -27,7 +27,7 @@ class PoolRepository(BaseRepository):
 
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-                PRIMARY KEY (pool_address)
+                PRIMARY KEY (address)
             );
         """
         self.db.execute(text(query))

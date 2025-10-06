@@ -16,6 +16,8 @@ from src.tasks.parse.transfer import parse_transfer
 from src.tasks.parse.uniswap_v2_event import parse_uniswap_v2_event
 from src.tasks.parse.uniswap_v3_event import parse_uniswap_v3_event
 from src.tasks.parse.account import parse_account, enrich_account_balance
+from src.tasks.parse.pool import parse_pool, enrich_pool_token, enrich_pool_balance
+from src.tasks.parse.token import parse_token, enrich_token_info
 
 from src.tasks.fetch.raw_trace import fetch_raw_trace
 from src.tasks.parse.trace import parse_trace
@@ -38,6 +40,8 @@ entity_func = {
     Entity.TRANSFER: [parse_transfer],
     Entity.EVENT: [parse_uniswap_v2_event, parse_uniswap_v3_event],
     Entity.ACCOUNT: [parse_account, enrich_account_balance],
+    Entity.POOL: [parse_pool, enrich_pool_token, enrich_pool_balance],
+    Entity.TOKEN: [parse_token, enrich_token_info],
 
     Entity.RAW_TRACE: [fetch_raw_trace],
     Entity.TRACE: [parse_trace]
@@ -56,6 +60,11 @@ func_func = {
     parse_uniswap_v3_event: [parse_log],
     parse_account: [parse_receipt],
     enrich_account_balance: [parse_account],
+    parse_pool: [parse_uniswap_v2_event, parse_uniswap_v3_event],
+    enrich_pool_token: [parse_pool],
+    enrich_pool_balance: [enrich_pool_token],
+    parse_token: [enrich_pool_token],
+    enrich_token_info: [parse_token],
 
     fetch_raw_trace: [],
     parse_trace: [fetch_raw_trace]

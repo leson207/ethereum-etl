@@ -9,13 +9,11 @@ async def export_raw_block(results: dict[str, list], **kwargs):
     repo = RawBlockRepository()
     repo.insert(results[Entity.RAW_BLOCK], deduplicate="replace")
 
-
 async def export_block(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.block import BlockRepository
 
     repo = BlockRepository()
     repo.insert(results[Entity.BLOCK], deduplicate="replace")
-
 
 async def export_transaction(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.transaction import TransactionRepository
@@ -23,13 +21,11 @@ async def export_transaction(results: dict[str, list], **kwargs):
     repo = TransactionRepository()
     repo.insert(results[Entity.TRANSACTION], deduplicate="replace")
 
-
 async def export_withdrawal(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.withdrawal import WithdrawalRepository
 
     repo = WithdrawalRepository()
     repo.insert(results[Entity.WITHDRAWAL], deduplicate="replace")
-
 
 async def export_raw_receipt(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.raw_receipt import RawReceiptRepository
@@ -37,13 +33,11 @@ async def export_raw_receipt(results: dict[str, list], **kwargs):
     repo = RawReceiptRepository()
     repo.insert(results[Entity.RAW_RECEIPT], deduplicate="replace")
 
-
 async def export_receipt(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.receipt import ReceiptRepository
 
     repo = ReceiptRepository()
     repo.insert(results[Entity.RECEIPT], deduplicate="replace")
-
 
 async def export_log(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.log import LogRepository
@@ -69,6 +63,18 @@ async def export_account(results: dict[str, list], **kwargs):
     repo = AccountRepository()
     repo.insert(results[Entity.ACCOUNT], deduplicate="replace")
 
+async def export_pool(results: dict[str, list], **kwargs):
+    from src.repositories.sqlite.pool import PoolRepository
+
+    repo = PoolRepository()
+    repo.insert(results[Entity.POOL], deduplicate="replace")
+
+async def export_token(results: dict[str, list], **kwargs):
+    from src.repositories.sqlite.token import TokenRepository
+
+    repo = TokenRepository()
+    repo.insert(results[Entity.TOKEN], deduplicate="replace")
+
 async def export_raw_trace(results: dict[str, list], **kwargs):
     from src.repositories.sqlite.raw_trace import RawTraceRepository
 
@@ -93,6 +99,8 @@ entity_func = {
     Entity.TRANSFER: export_transfer,
     Entity.EVENT: export_event,
     Entity.ACCOUNT: export_account,
+    Entity.POOL: export_pool,
+    Entity.TOKEN: export_token,
 
     Entity.RAW_TRACE: export_raw_trace,
     Entity.TRACE: export_trace

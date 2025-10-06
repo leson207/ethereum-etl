@@ -5,30 +5,26 @@ from src.utils.common import hex_to_dec
 
 
 def parse_account(results: dict[str, list], **kwargs):
+    account_addresses = []
     for receipt in results[Entity.RAW_RECEIPT]:
-        accounts = parse(receipt["data"])
-        results[Entity.ACCOUNT].extend(accounts)
+        item = receipt["data"]
+        contract_addresses = []
 
+        account_addresses.append(item.get("from"))
+        if item["contractAddress"]:
+            contract_addresses.append(item["contractAddress"])
 
-def parse(item: dict):
-    contract_addresses = []
-    account_addresses = []  # Externally Owned Account aka wallet address, user_address, ...
+        for log in item.get("logs", []):
+            contract_addresses.append(log["address"])
 
-    account_addresses.append(item.get("from"))
-    if item["contractAddress"]:
-        contract_addresses.append(item["contractAddress"])
+        if item["to"] not in contract_addresses:
+            account_addresses.append(item["to"])
 
-    for log in item.get("logs", []):
-        contract_addresses.append(log["address"])
+    account_addresses = list(set(account_addresses))
 
-    if item["to"] not in contract_addresses:
-        account_addresses.append(item["to"])
-
-    account_addresses = [
+    results[Entity.POOL] = [
         {"address": address} for address in account_addresses if address
     ]
-
-    return account_addresses
 
 
 # ---------------------------------------------

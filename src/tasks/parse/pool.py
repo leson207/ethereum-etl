@@ -5,8 +5,9 @@ from src.abis.function import FUNCTION_HEX_SIGNATURES
 
 
 def parse_pool(results: dict[str, list], **kwargs):
-    pools = [{"address": event["pool_address"]} for event in results[Entity.EVENT]]
-    results[Entity.POOL] = list(set(pools))
+    addresses = [event["pool_address"] for event in results[Entity.EVENT]]
+    addresses = list(set(addresses))
+    results[Entity.POOL] = [{"address": address} for address in addresses]
 
 
 # -----------------------------------------------------------
@@ -40,6 +41,7 @@ async def enrich_pool_token(
                 "error" in i
                 for i in responses[i * num_enrich_field : (i + 1) * num_enrich_field]
             ):
+                results[Entity.POOL].remove(pool)  # TODO: fix this to hold error pool?
                 continue
 
             token0, token1 = responses[
@@ -49,6 +51,7 @@ async def enrich_pool_token(
             pool["token1_address"] = "0x" + token1["result"][-40:]
 
     tasks = []
+    batch_size = 10
     for i in range(0, len(results[Entity.POOL]), batch_size):
         batch = results[Entity.POOL][i : i + batch_size]
         task = asyncio.create_task(_run(rpc_client, batch))
@@ -74,7 +77,7 @@ async def enrich_pool_balance(
                     {
                         "to": "0x" + pool[token].lower()[-40:],
                         "data": FUNCTION_HEX_SIGNATURES["erc20"]["balanceOf"][:10]
-                        + pool["pool_address"].lower().replace("0x", "").rjust(64, "0"),
+                        + pool["address"].lower().replace("0x", "").rjust(64, "0"),
                     }
                 ]
                 param_sets.append(param_set)
@@ -105,6 +108,7 @@ async def enrich_pool_balance(
             )
 
     tasks = []
+    batch_size = 10
     for i in range(0, len(results[Entity.POOL]), batch_size):
         batch = results[Entity.POOL][i : i + batch_size]
         task = asyncio.create_task(_run(rpc_client, batch))

@@ -6,12 +6,13 @@ from src.utils.enumeration import Entity
 
 
 def parse_token(results: dict[str, list], **kwargs):
-    tokens = [
-        {"address": addr}
+    addresses = [
+        addr
         for pool in results[Entity.POOL]
         for addr in (pool["token0_address"], pool["token1_address"])
     ]
-    results[Entity.TOKEN] = list(set(tokens))
+    addresses = list(set(addresses))
+    results[Entity.TOKEN] = [{"address": address} for address in addresses]
 
 
 # ------------------------------------------
@@ -58,13 +59,14 @@ async def enrich_token_info(
             token["name"] = decode(name["result"])
             token["symbol"] = decode(symbol["result"])
             token["decimals"] = (
-                int(decimals["result"], 16) if decimals["result"] != "0x" else 0,
+                int(decimals["result"], 16) if decimals["result"] != "0x" else 0
             )
             token["total_supply"] = (
                 int(total_supply["result"], 16) if total_supply["result"] != "0x" else 0
             )
 
     tasks = []
+    batch_size = 5
     for i in range(0, len(results[Entity.TOKEN]), batch_size):
         batch = results[Entity.TOKEN][i : i + batch_size]
         task = asyncio.create_task(_run(rpc_client, batch))
