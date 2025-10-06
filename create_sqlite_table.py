@@ -12,6 +12,9 @@ from src.repositories.sqlite.pool import PoolRepository
 from src.repositories.sqlite.token import TokenRepository
 from src.repositories.sqlite.raw_trace import RawTraceRepository
 from src.repositories.sqlite.trace import TraceRepository
+from src.configs.connection_manager import connection_manager
+
+connection_manager.init_sqlite()
 
 repos = [
     RawBlockRepository(),

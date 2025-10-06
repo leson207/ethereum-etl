@@ -20,6 +20,7 @@ class AccountRepository(BaseRepository):
             CREATE TABLE IF NOT EXISTS '{table_name}'
             (
                 address            TEXT,
+                balance            BIGINT,
 
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

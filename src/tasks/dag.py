@@ -15,6 +15,7 @@ from src.tasks.parse.log import parse_log
 from src.tasks.parse.transfer import parse_transfer
 from src.tasks.parse.uniswap_v2_event import parse_uniswap_v2_event
 from src.tasks.parse.uniswap_v3_event import parse_uniswap_v3_event
+from src.tasks.parse.account import parse_account, enrich_account_balance
 
 from src.tasks.fetch.raw_trace import fetch_raw_trace
 from src.tasks.parse.trace import parse_trace
@@ -36,6 +37,7 @@ entity_func = {
     Entity.LOG: [parse_log],
     Entity.TRANSFER: [parse_transfer],
     Entity.EVENT: [parse_uniswap_v2_event, parse_uniswap_v3_event],
+    Entity.ACCOUNT: [parse_account, enrich_account_balance],
 
     Entity.RAW_TRACE: [fetch_raw_trace],
     Entity.TRACE: [parse_trace]
@@ -52,6 +54,8 @@ func_func = {
     parse_transfer: [parse_log],
     parse_uniswap_v2_event: [parse_log],
     parse_uniswap_v3_event: [parse_log],
+    parse_account: [parse_receipt],
+    enrich_account_balance: [parse_account],
 
     fetch_raw_trace: [],
     parse_trace: [fetch_raw_trace]
@@ -75,7 +79,7 @@ def create_node(
         "progress": progress,
         "task_id": task_id,
         "results": defaultdict(list),
-        "client": rpc_client,
+        "rpc_client": rpc_client,
         "block_numbers": range(start_block, end_block + 1),
         "batch_size": end_block - start_block + 1,
         "include_transaction": True,  # TODO: fix this

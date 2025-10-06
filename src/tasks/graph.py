@@ -43,10 +43,15 @@ class Graph:
         for name, node in self.nodes.items():
             if node.status != "pending":
                 continue
-
+            
             if not all(
                 self.nodes[node_name].status == "done" for node_name in node.dep_nodes
             ):
+                # print(name)
+                # for node_name in node.dep_nodes:
+                #     if self.nodes[node_name].status != "done":
+                #         print(node_name)
+                # print("8"*100)
                 continue
 
             if inspect.iscoroutinefunction(node.func):

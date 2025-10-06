@@ -55,6 +55,21 @@ class RpcClient:
         requests = [self.form_request("eth_call", params) for params in param_sets]
         return await self.send_and_read(requests=requests)
 
+    async def eth_get_balance(
+        self, addresses: list[str], block_number: int | str = "latest"
+    ):
+        param_sets = [
+            [
+                addresses,
+                hex(block_number) if isinstance(block_number, int) else block_number,
+            ]
+            for addresses in addresses
+        ]
+        requests = [
+            self.form_request("eth_getBalance", params) for params in param_sets
+        ]
+        return await self.send_and_read(requests=requests)
+
     async def get_block_by_number(
         self, block_numbers: list[int], include_transaction: bool
     ):
