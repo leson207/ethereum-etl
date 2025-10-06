@@ -3,15 +3,11 @@ from sqlalchemy import text
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
 from src.schemas.sql.event import Event as SQL_Event
-from src.schemas.python.event import Event as Python_Event
 
 
 class EventRepository(BaseRepository):
     def __init__(self):
-        super().__init__(
-            sql_schema=SQL_Event,
-            python_schema=Python_Event,
-        )
+        super().__init__(sql_schema=SQL_Event)
 
     def _create(self, table_name: str = None):
         table_name = table_name or self.table_name

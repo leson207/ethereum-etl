@@ -16,5 +16,3 @@ async def fetch_raw_trace(
                 "data": data,
             }
             results[Entity.RAW_TRACE].append(raw_trace)
-
-    print(len(results[Entity.RAW_TRACE]))

@@ -86,10 +86,6 @@ async def main(
 
                         graph.add_nodes(new_nodes)
 
-                    # tmp = list(graph.nodes.values())[0]
-                    # print(tmp.name)
-                    # print(tmp.dep_nodes)
-
                     if graph.running_count < running_queue_size:
                         await graph.run(tg, pool)
 

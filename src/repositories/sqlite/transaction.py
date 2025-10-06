@@ -3,15 +3,11 @@ from sqlalchemy import text
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
 from src.schemas.sql.transaction import Transaction as SQL_Transaction
-from src.schemas.python.transaction import Transaction as Python_Transaction
 
 
 class TransactionRepository(BaseRepository):
     def __init__(self):
-        super().__init__(
-            sql_schema=SQL_Transaction,
-            python_schema=Python_Transaction,
-        )
+        super().__init__(sql_schema=SQL_Transaction)
 
     def _create(self, table_name: str = None):
         table_name = table_name or self.table_name

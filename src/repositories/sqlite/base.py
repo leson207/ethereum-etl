@@ -13,14 +13,9 @@ from src.utils.enumeration import Exporter
 
 
 class BaseRepository:
-    def __init__(
-        self,
-        sql_schema: Type,
-        python_schema: Type,
-    ):
+    def __init__(self,sql_schema: Type):
         self.db = connection_manager[Exporter.SQLITE]
         self.sql_schema = sql_schema
-        self.python_schema = python_schema
         self.table_name = sql_schema.__tablename__
         self.primary_keys = [col.name for col in sql_schema.__table__.primary_key]
 

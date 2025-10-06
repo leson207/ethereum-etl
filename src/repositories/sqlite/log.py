@@ -3,15 +3,11 @@ from sqlalchemy import text
 from src.logger import logger
 from src.repositories.sqlite.base import BaseRepository
 from src.schemas.sql.log import Log as SQL_Log
-from src.schemas.python.log import Log as Python_Log
 
 
 class LogRepository(BaseRepository):
     def __init__(self):
-        super().__init__(
-            sql_schema=SQL_Log,
-            python_schema=Python_Log,
-        )
+        super().__init__(sql_schema=SQL_Log)
 
     def _create(self, table_name: str = None):
         table_name = table_name or self.table_name
