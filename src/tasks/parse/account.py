@@ -22,7 +22,7 @@ def parse_account(results: dict[str, list], **kwargs):
 
     account_addresses = list(set(account_addresses))
 
-    results[Entity.POOL] = [
+    results[Entity.ACCOUNT] = [
         {"address": address} for address in account_addresses if address
     ]
 
@@ -49,5 +49,4 @@ async def enrich_account_balance(
         task = asyncio.create_task(_run(rpc_client, batch))
         tasks.append(task)
 
-    for coro in asyncio.as_completed(tasks):
-        await coro
+    await asyncio.gather(*tasks)

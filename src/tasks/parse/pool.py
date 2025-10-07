@@ -57,10 +57,7 @@ async def enrich_pool_token(
         task = asyncio.create_task(_run(rpc_client, batch))
         tasks.append(task)
 
-    for coro in asyncio.as_completed(
-        tasks
-    ):  # TODO: gather, runner, tashgroup or something else
-        await coro
+    await asyncio.gather(*tasks)
 
 
 # -------------------------------------------
@@ -114,5 +111,18 @@ async def enrich_pool_balance(
         task = asyncio.create_task(_run(rpc_client, batch))
         tasks.append(task)
 
-    for coro in asyncio.as_completed(tasks):
-        await coro
+    await asyncio.gather(*tasks)
+
+
+# -----------------------------------------
+
+
+async def enrich_token_price(results: dict[str, list], **kwargs):
+    # update the graph
+    USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    for pool in results[Entity.POOL]:
+        for token in ["token0", "token1"]:
+            address = pool[f"{token}_address"]
+            # find the shortest past address -> USDT
+            # calculate the price
+            pool[f"{token}_price"] = 0

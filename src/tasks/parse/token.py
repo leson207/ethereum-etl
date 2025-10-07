@@ -72,5 +72,4 @@ async def enrich_token_info(
         task = asyncio.create_task(_run(rpc_client, batch))
         tasks.append(task)
 
-    for coro in asyncio.as_completed(tasks):
-        await coro
+    await asyncio.gather(*tasks)

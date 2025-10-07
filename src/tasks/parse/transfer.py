@@ -30,7 +30,6 @@ def parse(item: dict):
     from_address = "0x" + params[0][-40:]
     to_address = "0x" + params[1][-40:]
     value = params[2]
-    # TODO: be careful when convert hex of signed number
     transfer = {
         "contract_address": item["address"],
         "from_address": from_address,
