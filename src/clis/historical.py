@@ -41,9 +41,12 @@ async def main(
     entities: list[str],
     exporters: list[str],
     num_workers: int,
-):  
-    await connection_manager.init(exporters+ ["rpc", "memgraph"])
-    await connection_manager["memgraph"].execute_query("MATCH (n) DETACH DELETE n")
+):
+    if "pool" not in entities:
+        await connection_manager.init(exporters+ ["rpc"])
+    else:
+        await connection_manager.init(exporters+ ["rpc", "memgraph"])
+        # await connection_manager["memgraph"].execute_query("MATCH (n) DETACH DELETE n")    
 
     graph = Graph()
 

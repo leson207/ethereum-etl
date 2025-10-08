@@ -2,14 +2,14 @@ from src.utils.common import hex_to_dec
 from src.utils.enumeration import Entity
 
 
-def parse_log(results: dict[str, list], **kwargs):
+def log_init(results: dict[str, list], **kwargs):
     for raw_receipt in results[Entity.RAW_RECEIPT]:
         for raw_log in raw_receipt["data"].get("logs", []):
-            log = parse(raw_log)
+            log = _extract(raw_log)
             results[Entity.LOG].append(log)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     log = {
         "address": item["address"],
         "topics": item["topics"],

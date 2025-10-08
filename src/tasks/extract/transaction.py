@@ -2,14 +2,14 @@ from src.utils.common import hex_to_dec
 from src.utils.enumeration import Entity
 
 
-def parse_transaction(results: dict[str, list], **kwargs):
+def transaction_init(results: dict[str, list], **kwargs):
     for raw_block in results[Entity.RAW_BLOCK]:
         for raw_transaction in raw_block["data"]["transactions"]:
-            transaction = parse(raw_transaction)
+            transaction = _extract(raw_transaction)
             results[Entity.TRANSACTION].append(transaction)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     transaction = {
         "type": item["type"],
         "chain_id": item.get("chainId"),

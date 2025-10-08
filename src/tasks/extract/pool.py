@@ -7,7 +7,7 @@ from src.clients.rpc_client import RpcClient
 from src.utils.enumeration import Entity
 
 
-def parse_pool(results: dict[str, list], **kwargs):
+def pool_init_address(results: dict[str, list], **kwargs):
     addresses = [event["pool_address"] for event in results[Entity.EVENT]]
     addresses = list(set(addresses))
     results[Entity.POOL] = [{"address": address} for address in addresses]
@@ -16,7 +16,7 @@ def parse_pool(results: dict[str, list], **kwargs):
 # -----------------------------------------------------------
 
 
-async def enrich_pool_token(
+async def pool_enrich_token_address(
     results: dict[str, list], rpc_client: RpcClient, batch_size: int, **kwargs
 ):
     def _form_param_set(pools: list[dict]):
@@ -66,7 +66,7 @@ async def enrich_pool_token(
 # -------------------------------------------
 
 
-async def enrich_pool_balance(
+async def pool_enrich_token_balance(
     results: dict[str, list], rpc_client: RpcClient, batch_size: int, **kwargs
 ):
     def _form_param_set(pools: list[dict]):
@@ -120,7 +120,7 @@ async def enrich_pool_balance(
 # -----------------------------------------
 
 
-async def enrich_pool_update_graph(
+async def pool_update_graph(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
 ):
     async def _run(client: AsyncDriver, pool: dict):
@@ -154,7 +154,7 @@ async def enrich_pool_update_graph(
     # await asyncio.gather(*tasks)
 
 
-async def enrich_pool_price(
+async def pool_enrich_token_price(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
 ):
     async def _run(client: AsyncDriver, pool: dict):

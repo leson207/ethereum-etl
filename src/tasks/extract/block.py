@@ -2,13 +2,13 @@ from src.utils.common import hex_to_dec
 from src.utils.enumeration import Entity
 
 
-def parse_block(results: dict[str, list], **kwargs):
+def block_init(results: dict[str, list], **kwargs):
     for raw_block in results[Entity.RAW_BLOCK]:
-        block = parse(raw_block["data"])
+        block = _extract(raw_block["data"])
         results[Entity.BLOCK].append(block)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     block = {
         "hash": item["hash"],
         "parent_hash": item["parentHash"],

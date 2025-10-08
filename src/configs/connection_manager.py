@@ -91,7 +91,6 @@ class ConnectionManager:
         )
         await self.conn["memgraph"].verify_connectivity()
         logger.info(f"MEMGRAPH DATABASE URL: {env.MEMGRAPH_SERVER}")
-        # await graph.execute_query("MATCH (n) DETACH DELETE n")
 
     async def close(self):
         for exporter in self.exporters:

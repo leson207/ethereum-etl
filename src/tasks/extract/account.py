@@ -4,7 +4,7 @@ from src.clients.rpc_client import RpcClient
 from src.utils.common import hex_to_dec
 
 
-def parse_account(results: dict[str, list], **kwargs):
+def account_init_address(results: dict[str, list], **kwargs):
     account_addresses = []
     for receipt in results[Entity.RAW_RECEIPT]:
         item = receipt["data"]
@@ -30,7 +30,7 @@ def parse_account(results: dict[str, list], **kwargs):
 # ---------------------------------------------
 
 
-async def enrich_account_balance(
+async def account_enrich_balance(
     results: dict[str, list], rpc_client: RpcClient, batch_size: int, **kwargs
 ):
     async def _run(rpc_client: RpcClient, accounts: list[dict]):

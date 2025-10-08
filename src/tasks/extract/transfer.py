@@ -7,17 +7,17 @@ TRANSFER_EVENT_TEXT_SIGNATURE = "Transfer(address,address,uint256)"  # from, to,
 TRANSFER_EVENT_HEX_SIGNATURE = to_hex(keccak(text=TRANSFER_EVENT_TEXT_SIGNATURE))
 
 
-def parse_transfer(results: dict[str, list], **kwargs):
+def transfer_init(results: dict[str, list], **kwargs):
     for log in results[Entity.LOG]:
         if len(log["topics"]) == 0 or log["topics"][0] != TRANSFER_EVENT_HEX_SIGNATURE:
             continue
 
-        transfer = parse(log)
+        transfer = _extract(log)
         if transfer:
             results[Entity.TRANSFER].append(transfer)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     params = item["topics"][1:]
     for i in range((len(item["data"]) - 2) // 64):
         params.append(item["data"][2 + i : 2 + i + 64])

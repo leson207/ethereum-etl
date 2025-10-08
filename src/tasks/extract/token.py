@@ -5,7 +5,7 @@ from src.abis.function import FUNCTION_HEX_SIGNATURES
 from src.utils.enumeration import Entity
 
 
-def parse_token(results: dict[str, list], **kwargs):
+def token_init_address(results: dict[str, list], **kwargs):
     addresses = [
         addr
         for pool in results[Entity.POOL]
@@ -18,7 +18,7 @@ def parse_token(results: dict[str, list], **kwargs):
 # ------------------------------------------
 
 
-async def enrich_token_info(
+async def token_enrich_info(
     results: dict[str, list], rpc_client: RpcClient, batch_size: int, **kwargs
 ):
     def decode(hex_string):

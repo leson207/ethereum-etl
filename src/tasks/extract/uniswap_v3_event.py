@@ -2,15 +2,15 @@ from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input
 from src.utils.enumeration import Entity
 
 
-def parse_uniswap_v3_event(results: dict[str, list], **kwargs):
+def uniswap_v3_event_init(results: dict[str, list], **kwargs):
     for log in results[Entity.LOG]:
-        event = parse(log)
+        event = _extract(log)
         if event:
             results[Entity.EVENT].append(event)
 
 
 # https://ethereum.stackexchange.com/questions/12553/understanding-logs-and-log-blooms
-def parse(log: dict):
+def _extract(log: dict):
     topics = log["topics"]
     if not topics:
         return None

@@ -1,23 +1,20 @@
 # Target
 note to remove at data type at the end of use.
-other way to group node by folder
 
-parse -> extract
-rename function: parse_raw_block -> extract_raw_block or process_raw_block_base or ....
-pool_init, pool_enrich_token, ....
-
-more etl term: map, reduce, aggreate, ingest, .. 
 empty to none?
 normlaize address
 docker compose
 update python
-add sql_schema to table file
+remove service
+remember todo
 # Dev:
+- test then commit
+- add sql_schema to table file
+- then commit
+
 - better shortest path query
 - why the address got lower?
 - memgraph - persis - increase paralel/concurrent, timeout? use async here
-- rename function
-- do not create memgraph client if not need?
 
 - larger scale
 - real time

@@ -4,23 +4,23 @@ from rich.progress import Progress, TaskID
 
 from src.schemas.node import Node
 
-from src.tasks.fetch.raw_block import fetch_raw_block
-from src.tasks.parse.block import parse_block
-from src.tasks.parse.transaction import parse_transaction
-from src.tasks.parse.withdrawal import parse_withdrawal
+from src.tasks.fetch.raw_block import raw_block_init
+from src.tasks.extract.block import block_init
+from src.tasks.extract.transaction import transaction_init
+from src.tasks.extract.withdrawal import withdrawal_init
 
-from src.tasks.fetch.raw_receipt import fetch_raw_receipt
-from src.tasks.parse.receipt import parse_receipt
-from src.tasks.parse.log import parse_log
-from src.tasks.parse.transfer import parse_transfer
-from src.tasks.parse.uniswap_v2_event import parse_uniswap_v2_event
-from src.tasks.parse.uniswap_v3_event import parse_uniswap_v3_event
-from src.tasks.parse.account import parse_account, enrich_account_balance
-from src.tasks.parse.pool import parse_pool, enrich_pool_token, enrich_pool_balance, enrich_pool_update_graph, enrich_pool_price
-from src.tasks.parse.token import parse_token, enrich_token_info
+from src.tasks.fetch.raw_receipt import raw_receipt_init
+from src.tasks.extract.receipt import receipt_init
+from src.tasks.extract.log import log_init
+from src.tasks.extract.transfer import transfer_init
+from src.tasks.extract.uniswap_v2_event import uniswap_v2_event_init
+from src.tasks.extract.uniswap_v3_event import uniswap_v3_event_init
+from src.tasks.extract.account import account_init_address, account_enrich_balance
+from src.tasks.extract.pool import pool_init_address, pool_enrich_token_address, pool_enrich_token_balance, pool_update_graph, pool_enrich_token_price
+from src.tasks.extract.token import token_init_address, token_enrich_info
 
-from src.tasks.fetch.raw_trace import fetch_raw_trace
-from src.tasks.parse.trace import parse_trace
+from src.tasks.fetch.raw_trace import raw_trace_init
+from src.tasks.extract.trace import trace_init
 
 from src.tasks.finish import finish
 
@@ -29,47 +29,47 @@ from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
 from src.utils.enumeration import Entity, Exporter
 
 entity_func = {
-    Entity.RAW_BLOCK: [fetch_raw_block],
-    Entity.BLOCK: [parse_block],
-    Entity.TRANSACTION: [parse_transaction],
-    Entity.WITHDRAWAL: [parse_withdrawal],
+    Entity.RAW_BLOCK: [raw_block_init],
+    Entity.BLOCK: [block_init],
+    Entity.TRANSACTION: [transaction_init],
+    Entity.WITHDRAWAL: [withdrawal_init],
     
-    Entity.RAW_RECEIPT: [fetch_raw_receipt],
-    Entity.RECEIPT: [parse_receipt],
-    Entity.LOG: [parse_log],
-    Entity.TRANSFER: [parse_transfer],
-    Entity.EVENT: [parse_uniswap_v2_event, parse_uniswap_v3_event],
-    Entity.ACCOUNT: [parse_account, enrich_account_balance],
-    Entity.POOL: [parse_pool, enrich_pool_token, enrich_pool_balance, enrich_pool_update_graph, enrich_pool_price],
-    Entity.TOKEN: [parse_token, enrich_token_info],
+    Entity.RAW_RECEIPT: [raw_receipt_init],
+    Entity.RECEIPT: [receipt_init],
+    Entity.LOG: [log_init],
+    Entity.TRANSFER: [transfer_init],
+    Entity.EVENT: [uniswap_v2_event_init, uniswap_v3_event_init],
+    Entity.ACCOUNT: [account_init_address, account_enrich_balance],
+    Entity.POOL: [pool_init_address, pool_enrich_token_address, pool_enrich_token_balance, pool_enrich_token_balance, pool_update_graph, pool_enrich_token_price],
+    Entity.TOKEN: [token_init_address, token_enrich_info],
 
-    Entity.RAW_TRACE: [fetch_raw_trace],
-    Entity.TRACE: [parse_trace]
+    Entity.RAW_TRACE: [raw_trace_init],
+    Entity.TRACE: [trace_init]
 }
 func_func = {
-    fetch_raw_block: [],
-    parse_block: [fetch_raw_block],
-    parse_transaction: [fetch_raw_block],
-    parse_withdrawal: [fetch_raw_block],
+    raw_block_init: [],
+    block_init: [raw_block_init],
+    transaction_init: [raw_block_init],
+    withdrawal_init: [raw_block_init],
 
-    fetch_raw_receipt: [],
-    parse_receipt: [fetch_raw_receipt],
-    parse_log: [fetch_raw_receipt],
-    parse_transfer: [parse_log],
-    parse_uniswap_v2_event: [parse_log],
-    parse_uniswap_v3_event: [parse_log],
-    parse_account: [parse_receipt],
-    enrich_account_balance: [parse_account],
-    parse_pool: [parse_uniswap_v2_event, parse_uniswap_v3_event],
-    enrich_pool_token: [parse_pool],
-    enrich_pool_balance: [enrich_pool_token],
-    enrich_pool_update_graph: [enrich_pool_balance],
-    enrich_pool_price: [enrich_pool_update_graph],
-    parse_token: [enrich_pool_token],
-    enrich_token_info: [parse_token],
+    raw_receipt_init: [],
+    receipt_init: [raw_receipt_init],
+    log_init: [raw_receipt_init],
+    transfer_init: [log_init],
+    uniswap_v2_event_init: [log_init],
+    uniswap_v3_event_init: [log_init],
+    account_init_address: [receipt_init],
+    account_enrich_balance: [account_init_address],
+    pool_init_address: [uniswap_v2_event_init, uniswap_v3_event_init],
+    pool_enrich_token_address: [pool_init_address],
+    pool_enrich_token_balance: [pool_enrich_token_address],
+    pool_update_graph: [pool_enrich_token_balance],
+    pool_enrich_token_price: [pool_update_graph],
+    token_init_address: [pool_enrich_token_address],
+    token_enrich_info: [token_init_address],
 
-    fetch_raw_trace: [],
-    parse_trace: [fetch_raw_trace]
+    raw_trace_init: [],
+    trace_init: [raw_trace_init]
 }
 
 exporter_entity_func = {Exporter.SQLITE: sqlite_entity_func}

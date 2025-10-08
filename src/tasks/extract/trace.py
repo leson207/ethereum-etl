@@ -1,13 +1,13 @@
 from src.utils.enumeration import Entity
 
 
-def parse_trace(results: dict[str, list], **kwargs):
+def trace_init(results: dict[str, list], **kwargs):
     for raw_trace in results[Entity.RAW_TRACE]:
-        trace = parse(raw_trace["data"])
+        trace = _extract(raw_trace["data"])
         results[Entity.TRACE].append(trace)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     trace = {
         "action": item["action"],
         "block_hash": item["blockHash"],

@@ -2,7 +2,7 @@ from src.clients.rpc_client import RpcClient
 from src.utils.enumeration import Entity
 
 
-async def fetch_raw_block(
+async def raw_block_init(
     results: dict[str, list],
     rpc_client: RpcClient,
     block_numbers: list[int],

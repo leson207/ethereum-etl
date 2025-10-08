@@ -2,7 +2,7 @@ from src.clients.rpc_client import RpcClient
 from src.utils.enumeration import Entity
 
 
-async def fetch_raw_receipt(
+async def raw_receipt_init(
     results: dict[str, list], rpc_client: RpcClient, block_numbers: list[int], **kwargs
 ):
     responses = await rpc_client.get_receipt_by_block_number(block_numbers=block_numbers)

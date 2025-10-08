@@ -2,13 +2,13 @@ from src.utils.common import hex_to_dec
 from src.utils.enumeration import Entity
 
 
-def parse_receipt(results: dict[str, list], **kwargs):
+def receipt_init(results: dict[str, list], **kwargs):
     for raw_receipt in results[Entity.RAW_RECEIPT]:
-        receipt = parse(raw_receipt["data"])
+        receipt = _extract(raw_receipt["data"])
         results[Entity.RECEIPT].append(receipt)
 
 
-def parse(item: dict):
+def _extract(item: dict):
     receipt = {
         "block_hash": item["blockHash"],
         "block_number": hex_to_dec(item["blockNumber"]),
