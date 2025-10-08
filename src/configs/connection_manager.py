@@ -9,9 +9,11 @@ class ConnectionManager:
     def __init__(self):
         self.conn = {}
         self.mapper = {
+            "rpc": self.init_rpc,
+            "memgraph": self.init_memgraph,
             Exporter.SQLITE: self.init_sqlite,
             Exporter.CLICKHOUSE: self.init_clickhouse,
-            Exporter.NATS: self.init_nats
+            Exporter.NATS: self.init_nats,
         }
 
     def __getitem__(self, key):
@@ -30,11 +32,12 @@ class ConnectionManager:
 
         DATABASE_PATH = f"{env._local_database_folder / env.DATABASE_NAME}.sqlite"
         DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
-        logger.info(f"SQLITE DATABASE URL: {DATABASE_URL}")
 
         engine = create_engine(DATABASE_URL, echo=env.DEBUG_MODE)
         Session = sessionmaker(bind=engine)
         self.conn[Exporter.SQLITE] = Session()
+
+        logger.info(f"SQLITE DATABASE URL: {DATABASE_URL}")
 
     async def init_nats(self):
         import nats
@@ -42,9 +45,12 @@ class ConnectionManager:
         self.conn["nats"] = await nats.connect(env.NATS_SERVER)
         self.conn["jetstream"] = self.conn["nats"].jetstream()
 
-        await self.conn["jetstream"].add_stream(
+        await self.conn[
+            "jetstream"
+        ].add_stream(
             name=env.DATABASE_NAME, subjects=[f"{env.NETWORK}.*"]
-        )
+        )  # TODO: this is create exprestion (like create databaes) check if it should be here
+
         logger.info(f"Created stream '{env.DATABASE_NAME}'")
 
     def init_clickhouse(self):
@@ -54,7 +60,6 @@ class ConnectionManager:
         from sqlalchemy.orm import sessionmaker
 
         DATABASE_URL = f"clickhouse://{env.CLICKHOUSE_USERNAME}:{quote_plus(env.CLICKHOUSE_PASSWORD)}@{env.CLICKHOUSE_SERVER}/{env.DATABASE_NAME}"
-        logger.info(f"CLICKHOUSE DATABASE URL: {DATABASE_URL}")
 
         engine = create_engine(
             DATABASE_URL,
@@ -69,15 +74,38 @@ class ConnectionManager:
         Session = sessionmaker(bind=engine)
         self.conn[Exporter.CLICKHOUSE] = Session()
 
+        logger.info(f"CLICKHOUSE DATABASE URL: {DATABASE_URL}")
+
+    async def init_rpc(self):
+        from src.clients.rpc_client import RpcClient
+
+        self.conn["rpc"] = RpcClient()
+        res = await self.conn["rpc"].get_web3_client_version()
+        logger.info(f"Web3 Client Version: {res[0]['result']}")
+
+    async def init_memgraph(self):
+        from neo4j import AsyncGraphDatabase
+
+        self.conn["memgraph"] = AsyncGraphDatabase.driver(
+            env.MEMGRAPH_SERVER, auth=(env.MEMGRAPH_USERNAME, env.MEMGRAPH_PASSWORD)
+        )
+        await self.conn["memgraph"].verify_connectivity()
+        logger.info(f"MEMGRAPH DATABASE URL: {env.MEMGRAPH_SERVER}")
+        # await graph.execute_query("MATCH (n) DETACH DELETE n")
+
     async def close(self):
         for exporter in self.exporters:
             match exporter:
                 case Exporter.SQLITE:
-                    self.conn[Exporter.SQLITE].close()
+                    self.conn[exporter].close()
                 case Exporter.CLICKHOUSE:
-                    self.conn[Exporter.CLICKHOUSE].close()
+                    self.conn[exporter].close()
                 case Exporter.NATS:
-                    self.conn[Exporter.NATS].drain()
+                    await self.conn[exporter].drain()
+                case "rpc":
+                    await self.conn[exporter].close()
+                case "memgraph":
+                    await self.conn[exporter].close()
                 case _:
                     raise
 

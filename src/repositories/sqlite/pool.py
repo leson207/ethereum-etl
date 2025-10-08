@@ -15,13 +15,13 @@ class PoolRepository(BaseRepository):
         query = f"""
             CREATE TABLE IF NOT EXISTS '{table_name}'
             (
-                address    TEXT,
-                token0_address  TEXT,
-                token1_address  TEXT,
-                token0_balance  HUGEUINT,
-                token1_balance  HUGEUINT,
-                token0_price    DOUBLE,
-                token1_price    DOUBLE,
+                address            TEXT,
+                token0_address     TEXT,
+                token1_address     TEXT,
+                token0_balance     HUGEUINT,
+                token1_balance     HUGEUINT,
+                token0_usd_price   DOUBLE,
+                token1_usd_price   DOUBLE,
 
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

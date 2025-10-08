@@ -11,5 +11,5 @@ class Pool(EntityMeta):
     token1_address = Column(String)
     token0_balance = Column(DECIMAL)
     token1_balance = Column(DECIMAL)
-    token0_price = Column(Double)
-    token1_price = Column(Double)
+    token0_usd_price = Column(Double)
+    token1_usd_price = Column(Double)

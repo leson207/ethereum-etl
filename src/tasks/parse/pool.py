@@ -161,22 +161,22 @@ async def enrich_pool_price(
         USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
         query = """
             MATCH (start:Token {address: $start_address}), (end:Token {address: $end_address})
-            MATCH p = (start)-[*BFS]-(end)
+            MATCH p = (start)-[*BFS..5]-(end)
             RETURN relationships(p) AS edges
         """
 
         records, _, _ = await client.execute_query(
             query, start_address=pool["token0_address"], end_address=USDT_ADDRESS
         )
-        # devide by  ?
+        # devide by 0 ?
         if records:
             price = 1.0
             for edge in records[0][0]:
                 ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
                 price = price / ratio
 
-            pool["token0_price"] = price
-            pool["token1_price"] = price * (
+            pool["token0_usd_price"] = price
+            pool["token1_usd_price"] = price * (
                 pool["token0_balance"] / pool["token1_balance"]
             )
             # print(pool)
