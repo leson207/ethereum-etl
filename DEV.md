@@ -11,11 +11,13 @@ normlaize address
 
 neo4j client in each fucntion or same level as task group?
 # Dev:
+- client for graph?
 - why the address got lower?
 - delete unsunse sql schema
-- eth price - memgraph - persis
+- eth price - memgraph - persis - increase paralel/concurrent, timeout?
 - limit pending size
 - larger scale
+- rename function
 - real time
 - config file for graph link
 - create table, create dabase
