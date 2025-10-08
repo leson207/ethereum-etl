@@ -55,7 +55,6 @@ async def main(
     res = await rpc_client.get_web3_client_version()
     logger.info(f"Web3 Client Version: {res[0]['result']}")
 
-
     graph = Graph()
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:

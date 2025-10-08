@@ -147,10 +147,11 @@ async def enrich_pool_update_graph(
 
     tasks = []
     for pool in results[Entity.POOL]:
-        task = asyncio.create_task(_run(graph_client, pool))
-        tasks.append(task)
+        await _run(graph_client, pool)
+    #     task = asyncio.create_task(_run(graph_client, pool))
+    #     tasks.append(task)
 
-    await asyncio.gather(*tasks)
+    # await asyncio.gather(*tasks)
 
 
 async def enrich_pool_price(
@@ -184,7 +185,8 @@ async def enrich_pool_price(
 
     tasks = []
     for pool in results[Entity.POOL]:
-        task = asyncio.create_task(_run(graph_client, pool))
-        tasks.append(task)
+        await _run(graph_client, pool)
+    #     task = asyncio.create_task(_run(graph_client, pool))
+    #     tasks.append(task)
 
-    await asyncio.gather(*tasks)
+    # await asyncio.gather(*tasks)
