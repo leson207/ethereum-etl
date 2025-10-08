@@ -14,7 +14,7 @@ update python
 # Dev:
 - rpc-client and memgrapphn in connection manager?
 - do not create memgraph client if not need?
-- memgraph - persis - increase paralel/concurrent, timeout?
+- memgraph - persis - increase paralel/concurrent, timeout? use async here
 - why the address got lower?
 - better shortest path query
 - larger scale

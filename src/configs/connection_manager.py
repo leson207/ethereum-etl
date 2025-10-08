@@ -8,7 +8,11 @@ from src.utils.enumeration import Exporter
 class ConnectionManager:
     def __init__(self):
         self.conn = {}
-        self.mapper = {Exporter.SQLITE: self.init_sqlite}
+        self.mapper = {
+            Exporter.SQLITE: self.init_sqlite,
+            Exporter.CLICKHOUSE: self.init_clickhouse,
+            Exporter.NATS: self.init_nats
+        }
 
     def __getitem__(self, key):
         return self.conn[key]
@@ -43,7 +47,7 @@ class ConnectionManager:
         )
         logger.info(f"Created stream '{env.DATABASE_NAME}'")
 
-    def clickhouse_init(self):
+    def init_clickhouse(self):
         from urllib.parse import quote_plus
 
         from sqlalchemy import create_engine
@@ -70,6 +74,10 @@ class ConnectionManager:
             match exporter:
                 case Exporter.SQLITE:
                     self.conn[Exporter.SQLITE].close()
+                case Exporter.CLICKHOUSE:
+                    self.conn[Exporter.CLICKHOUSE].close()
+                case Exporter.NATS:
+                    self.conn[Exporter.NATS].drain()
                 case _:
                     raise
 
