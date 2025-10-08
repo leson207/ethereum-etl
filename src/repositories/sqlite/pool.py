@@ -20,6 +20,8 @@ class PoolRepository(BaseRepository):
                 token1_address  TEXT,
                 token0_balance  HUGEUINT,
                 token1_balance  HUGEUINT,
+                token0_price    DOUBLE,
+                token1_price    DOUBLE,
 
                 updated_time       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

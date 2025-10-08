@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DECIMAL
+from sqlalchemy import Column, String, DECIMAL, Double
 
 from src.schemas.sql.base import EntityMeta
 
@@ -11,3 +11,5 @@ class Pool(EntityMeta):
     token1_address = Column(String)
     token0_balance = Column(DECIMAL)
     token1_balance = Column(DECIMAL)
+    token0_price = Column(Double)
+    token1_price = Column(Double)

@@ -1,18 +1,14 @@
-from src.services.pool_service import PoolService
-from src.clients.rpc_client import RpcClient
-import asyncio
-
-
-async def main():
-    client = RpcClient()
-    service = PoolService(client)
-    address = "0x8eea6cc08d824b20efb3bf7c248de694cb1f75f4"
-    # address = "0xbcca60bb61934080951369a648fb03df4f96263c"
-    # address = "0x00a0be1bbc0c99898df7e6524bf16e893c1e3bb9"
-    print("8"*100)
-    token0 = await service.get_token0_address(address)
-    print(token0)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+<Record edges=[
+    <Relationship
+        element_id='18449'
+        nodes=(
+                <Node element_id='8642' labels=frozenset() properties={}>,
+                <Node element_id='8643' labels=frozenset() properties={}>
+        ) 
+        type='POOL'
+        properties={'address': '0x4795c81762d5861d4fbb73a16838ff7bae86a904', 'src_balance': '7431359273831931059335', 'tgt_balance': '657335682601045399'}>,
+    <Relationship 
+        element_id='18455'
+        nodes=(<Node element_id='8643' labels=frozenset() properties={}>, <Node element_id='8647' labels=frozenset() properties={}>)
+        type='POOL'
+        properties={'address': '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852', 'src_balance': '10418461145749676739944', 'tgt_balance': '46673384106448'}>]>

@@ -17,6 +17,7 @@ from src.configs.connection_manager import connection_manager
 from src.logger import logger
 from src.tasks.dag import create_node
 from src.tasks.graph import Graph
+from neo4j import AsyncGraphDatabase
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -44,6 +45,13 @@ async def main(
     exporters: list[str],
     num_workers: int,
 ):
+    URI = "bolt://localhost:7687"
+    AUTH = ("", "")
+    async with AsyncGraphDatabase.driver(URI, auth=AUTH) as client:
+        await client.verify_connectivity()
+        await client.execute_query("MATCH (n) DETACH DELETE n")
+
+
     await connection_manager.init(exporters)
     rpc_client = RpcClient()
     res = await rpc_client.get_web3_client_version()
