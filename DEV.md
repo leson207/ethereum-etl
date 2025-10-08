@@ -11,15 +11,17 @@ normlaize address
 
 neo4j client in each fucntion or same level as task group?
 # Dev:
-- client for graph?
-- why the address got lower?
-- delete unsunse sql schema
+- update python
 - eth price - memgraph - persis - increase paralel/concurrent, timeout?
+- delete unsunse sql schema
 - limit pending size
+- why the address got lower?
+- config file for graph link
+- client for graph?
+- better shortest path query
 - larger scale
 - rename function
 - real time
-- config file for graph link
 - create table, create dabase
 - parse transfer with different topic kind (use the legacy function)
 - pool: hold error pool or find a way to get it token_address (some error pool: 0x8eea6cc08d824b20efb3bf7c248de694cb1f75f4, 0xbcca60bb61934080951369a648fb03df4f96263c, 0x00a0be1bbc0c99898df7e6524bf16e893c1e3bb9)

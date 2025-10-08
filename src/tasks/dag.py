@@ -79,6 +79,7 @@ def create_node(
     progress: Progress,
     task_id: TaskID,
     rpc_client,
+    graph_client,
     start_block: int,
     end_block: int,
     entities: list[str],
@@ -91,6 +92,7 @@ def create_node(
         "task_id": task_id,
         "results": defaultdict(list),
         "rpc_client": rpc_client,
+        "graph_client": graph_client,
         "block_numbers": range(start_block, end_block + 1),
         "batch_size": end_block - start_block + 1,
         "include_transaction": True,  # TODO: fix this

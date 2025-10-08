@@ -1,7 +1,10 @@
 import asyncio
-from src.utils.enumeration import Entity
-from src.clients.rpc_client import RpcClient
+
+from neo4j import AsyncDriver
+
 from src.abis.function import FUNCTION_HEX_SIGNATURES
+from src.clients.rpc_client import RpcClient
+from src.utils.enumeration import Entity
 
 
 def parse_pool(results: dict[str, list], **kwargs):
@@ -116,10 +119,10 @@ async def enrich_pool_balance(
 
 # -----------------------------------------
 
-from neo4j import AsyncGraphDatabase, AsyncDriver
 
-
-async def enrich_pool_update_graph(results: dict[str, list], **kwargs):
+async def enrich_pool_update_graph(
+    results: dict[str, list], graph_client: AsyncDriver, **kwargs
+):
     async def _run(client: AsyncDriver, pool: dict):
         query = """
             MERGE (a:Token {address: $token0_address})
@@ -142,18 +145,17 @@ async def enrich_pool_update_graph(results: dict[str, list], **kwargs):
             token1_balance=str(pool["token1_balance"]),
         )
 
-    URI = "bolt://localhost:7687"
-    AUTH = ("", "")
-    async with AsyncGraphDatabase.driver(URI, auth=AUTH) as client:
-        tasks = []
-        for pool in results[Entity.POOL]:
-            task = asyncio.create_task(_run(client, pool))
-            tasks.append(task)
+    tasks = []
+    for pool in results[Entity.POOL]:
+        task = asyncio.create_task(_run(graph_client, pool))
+        tasks.append(task)
 
-        await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
 
 
-async def enrich_pool_price(results: dict[str, list], **kwargs):
+async def enrich_pool_price(
+    results: dict[str, list], graph_client: AsyncDriver, **kwargs
+):
     async def _run(client: AsyncDriver, pool: dict):
         USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
         query = """
@@ -165,7 +167,7 @@ async def enrich_pool_price(results: dict[str, list], **kwargs):
         records, _, _ = await client.execute_query(
             query, start_address=pool["token0_address"], end_address=USDT_ADDRESS
         )
-        # devide by zero
+        # devide by  ?
         if records:
             price = 1.0
             for edge in records[0][0]:
@@ -180,12 +182,9 @@ async def enrich_pool_price(results: dict[str, list], **kwargs):
             # print()
             # print()
 
-    URI = "bolt://localhost:7687"
-    AUTH = ("", "")
-    async with AsyncGraphDatabase.driver(URI, auth=AUTH) as client:
-        tasks = []
-        for pool in results[Entity.POOL]:
-            task = asyncio.create_task(_run(client, pool))
-            tasks.append(task)
+    tasks = []
+    for pool in results[Entity.POOL]:
+        task = asyncio.create_task(_run(graph_client, pool))
+        tasks.append(task)
 
-        await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
