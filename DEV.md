@@ -8,9 +8,7 @@ update python
 remove service
 remember todo
 # Dev:
-- decimal
 - usdt is token0 do not work
-- uniswapv3 formular is not right
 - constrain
 
 - larger scale

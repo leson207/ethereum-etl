@@ -17,7 +17,7 @@ from src.tasks.extract.uniswap_v2_event import uniswap_v2_event_init
 from src.tasks.extract.uniswap_v3_event import uniswap_v3_event_init
 from src.tasks.extract.account import account_init_address, account_enrich_balance
 from src.tasks.extract.pool import pool_init_address, pool_enrich_token_address, pool_enrich_token_balance, pool_update_graph, pool_enrich_token_price
-from src.tasks.extract.token import token_init_address, token_enrich_info
+from src.tasks.extract.token import token_init_address, token_enrich_info, token_update_graph
 
 from src.tasks.fetch.raw_trace import raw_trace_init
 from src.tasks.extract.trace import trace_init
@@ -64,9 +64,11 @@ func_func = {
     pool_enrich_token_address: [pool_init_address],
     pool_enrich_token_balance: [pool_enrich_token_address],
     pool_update_graph: [pool_enrich_token_balance],
-    pool_enrich_token_price: [pool_update_graph],
+    pool_enrich_token_price: [token_update_graph, pool_update_graph],
+    
     token_init_address: [pool_enrich_token_address],
     token_enrich_info: [token_init_address],
+    token_update_graph: [token_enrich_info],
 
     raw_trace_init: [],
     trace_init: [raw_trace_init]

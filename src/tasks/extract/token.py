@@ -1,7 +1,9 @@
 import asyncio
-from src.clients.rpc_client import RpcClient
-from src.abis.function import FUNCTION_HEX_SIGNATURES
 
+from neo4j import AsyncDriver
+
+from src.abis.function import FUNCTION_HEX_SIGNATURES
+from src.clients.rpc_client import RpcClient
 from src.utils.enumeration import Entity
 
 
@@ -70,6 +72,42 @@ async def token_enrich_info(
     for i in range(0, len(results[Entity.TOKEN]), batch_size):
         batch = results[Entity.TOKEN][i : i + batch_size]
         task = asyncio.create_task(_run(rpc_client, batch))
+        tasks.append(task)
+
+    await asyncio.gather(*tasks)
+
+
+async def token_update_graph(
+    results: dict[str, list], graph_client: AsyncDriver, **kwargs
+):
+    async def _run(tokens: list[dict]):
+        params = {
+            "tokens": [
+                {
+                    "address": token["address"].lower(),
+                    "name": token["name"],
+                    "symbol": token["symbol"],
+                    "decimals": token["decimals"],
+                }
+                for token in tokens
+            ]
+        }
+
+        query = """
+            UNWIND $tokens AS token
+            MERGE (t:TOKEN {address: token.address})
+            SET t.name = token.name,
+                t.symbol = token.symbol,
+                t.decimals = token.decimals
+        """
+
+        await graph_client.execute_query(query, **params)
+
+    tasks = []
+    BATCH_SIZE = 500
+    for i in range(0, len(results[Entity.TOKEN]), BATCH_SIZE):
+        batch = results[Entity.TOKEN][i : i + BATCH_SIZE]
+        task = asyncio.create_task(_run(batch))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
