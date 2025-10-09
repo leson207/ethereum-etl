@@ -226,7 +226,7 @@ async def pool_enrich_token_price(
                 price_map[pool_address] = price
         
         for pool in pools:
-            if pool["src_address"] == USDT_ADDRESS:
+            if pool["token0_address"] == USDT_ADDRESS:
                 price_map[pool["address"]] = 1.0
 
             if pool["address"] in price_map:

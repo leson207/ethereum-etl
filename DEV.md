@@ -7,8 +7,9 @@ docker compose
 update python
 remove service
 remember todo
+driver or session
 # Dev:
-- constrain
+- find path to weth and merge to from weth to usdt
 
 - larger scale
 - real time
