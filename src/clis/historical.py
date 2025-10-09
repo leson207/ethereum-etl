@@ -46,17 +46,15 @@ async def main(
         await connection_manager.init(exporters+ ["rpc"])
     else:
         await connection_manager.init(exporters+ ["rpc", "memgraph"])
-        # await connection_manager["memgraph"].execute_query("DROP ALL INDEXES")
-        # await connection_manager["memgraph"].execute_query("MATCH (n) DETACH DELETE n")
+        async with connection_manager["memgraph"].session() as session:
+            # await session.run("DROP ALL INDEXES")
+            await session.run("MATCH (n) DETACH DELETE n")
 
-        await connection_manager["memgraph"].session().run("DROP CONSTRAINT ON (t:TOKEN) ASSERT t.address IS UNIQUE")
-        await connection_manager["memgraph"].session().run("CREATE CONSTRAINT ON (t:TOKEN) ASSERT t.address IS UNIQUE")
+            await session.run("DROP INDEX ON :TOKEN(address)")
+            await session.run("DROP INDEX ON: POOL(address)")
 
-        await connection_manager["memgraph"].session().run("DROP INDEX ON :TOKEN(address)")
-        await connection_manager["memgraph"].session().run("DROP INDEX ON: POOL(address)")
-
-        await connection_manager["memgraph"].session().run("CREATE INDEX ON :TOKEN(address)")
-        await connection_manager["memgraph"].session().run("CREATE INDEX ON :POOL(address)")
+            await session.run("CREATE INDEX ON :TOKEN(address)")
+            await session.run("CREATE INDEX ON :POOL(address)")
 
 
     graph = Graph()

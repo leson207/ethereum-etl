@@ -87,7 +87,12 @@ class ConnectionManager:
         from neo4j import AsyncGraphDatabase
 
         self.conn["memgraph"] = AsyncGraphDatabase.driver(
-            env.MEMGRAPH_SERVER, auth=(env.MEMGRAPH_USERNAME, env.MEMGRAPH_PASSWORD)
+            env.MEMGRAPH_SERVER,
+            auth=(env.MEMGRAPH_USERNAME, env.MEMGRAPH_PASSWORD),
+            max_connection_pool_size=50,
+            connection_acquisition_timeout=45.0,
+            liveness_check_timeout=300.0,
+            max_connection_lifetime=1800.0,
         )
         await self.conn["memgraph"].verify_connectivity()
         logger.info(f"MEMGRAPH DATABASE URL: {env.MEMGRAPH_SERVER}")
@@ -104,7 +109,7 @@ class ConnectionManager:
                 case "rpc":
                     await self.conn[exporter].close()
                 case "memgraph":
-                    await self.conn[exporter].close()
+                    await self.conn["memgraph"].close()
                 case _:
                     raise
 

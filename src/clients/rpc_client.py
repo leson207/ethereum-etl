@@ -115,7 +115,6 @@ class RpcClient:
                 logger.warning(
                     f"[Attempt {attempt}/{self.max_retries}] Failed to process {len(requests)} requests: {e}"
                 )
-                print(responses)
                 if self._backoff_event.is_set():
                     async with self._lock:
                         if self._backoff_event.is_set():  # Double-checked locking (safe in Python because of GIL) https://en.wikipedia.org/wiki/Double-checked_locking

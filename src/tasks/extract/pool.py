@@ -126,69 +126,111 @@ async def pool_enrich_token_balance(
 async def pool_update_graph(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
 ):
-    async def _run(client: AsyncDriver, pool: dict):
+    async def _process_batch(batch: list[dict]):
+        params = {
+            "pools": [
+                {
+                    "pool_address": pool["address"],
+                    "token0_address": pool["token0_address"].lower(),
+                    "token1_address": pool["token1_address"].lower(),
+                    "token0_balance": str(pool["token0_balance"]),
+                    "token1_balance": str(pool["token1_balance"]),
+                }
+                for pool in batch
+            ]
+        }
+
         query = """
-            MERGE (a:TOKEN {address: $token0_address})
-            MERGE (b:TOKEN {address: $token1_address})
+        UNWIND $pools AS pool
+        MERGE (a:TOKEN {address: pool.token0_address})
+        MERGE (b:TOKEN {address: pool.token1_address})
 
-            MERGE (a)-[p_ab:POOL {address: $pool_address}]->(b)
-            SET p_ab.src_balance = $token0_balance,
-                p_ab.tgt_balance = $token1_balance
+        MERGE (a)-[p_ab:POOL {address: pool.pool_address}]->(b)
+        SET p_ab.src_balance = pool.token0_balance,
+            p_ab.tgt_balance = pool.token1_balance
 
-            MERGE (b)-[p_ba:POOL {address: $pool_address}]->(a)
-            SET p_ba.src_balance = $token1_balance,
-                p_ba.tgt_balance = $token0_balance
+        MERGE (b)-[p_ba:POOL {address: pool.pool_address}]->(a)
+        SET p_ba.src_balance = pool.token1_balance,
+            p_ba.tgt_balance = pool.token0_balance
         """
-        await client.execute_query(
-            query,
-            pool_address=pool["address"],
-            token0_address=pool["token0_address"],
-            token1_address=pool["token1_address"],
-            token0_balance=str(pool["token0_balance"]),
-            token1_balance=str(pool["token1_balance"]),
-        )
+
+        # do not use session here, query in next step will execute before graph fully update
+        await graph_client.execute_query(query, **params)
 
     tasks = []
-    for pool in results[Entity.POOL]:
-        await _run(graph_client, pool)
-    #     task = asyncio.create_task(_run(graph_client, pool))
-    #     tasks.append(task)
+    BATCH_SIZE = 500
+    for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):
+        batch = results[Entity.POOL][i : i + BATCH_SIZE]
+        task = asyncio.create_task(_process_batch(batch))
+        tasks.append(task)
 
-    # await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
 
 
 async def pool_enrich_token_price(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
 ):
-    async def _run(client: AsyncDriver, pool: dict):
-        USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
+    async def _run(client: AsyncDriver, pools: list[dict]):
+        params = {
+            "pools": [
+                {
+                    "pool_address": pool["address"],
+                    "token0_address": pool["token0_address"].lower(),
+                    "token1_address": pool["token1_address"].lower(),
+                    "token0_balance": str(pool["token0_balance"]),
+                    "token1_balance": str(pool["token1_balance"]),
+                }
+                for pool in pools
+            ],
+            "usdt_address": "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower(),
+        }
         query = """
-            MATCH (start:TOKEN {address: $start_address}), (end:TOKEN {address: $end_address})
+            UNWIND $pools AS pool
+            MATCH (start:TOKEN {address: pool.token0_address}), (end:TOKEN {address: $usdt_address})
             MATCH p = (start)-[*BFS..10]-(end)
             RETURN relationships(p) AS edges
         """
 
-        records, _, _ = await client.execute_query(
-            query, start_address=pool["token0_address"], end_address=USDT_ADDRESS
-        )
-        # devide by 0 ?
-        if records:
-            price = 1.0
-            for edge in records[0][0]:
-                ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
-                price = price / ratio
+        async with client.session() as session:
+            result = await session.run(query, **params)
+            records = [record async for record in result]
 
-            pool["token0_usd_price"] = price
-            pool["token1_usd_price"] = price * (
-                pool["token0_balance"] / pool["token1_balance"]
-            )
-        else:
-            print(pool)
+            # devide by 0 ?
+            for pool, record in zip(pools, records):
+                if record:
+                    price = 1.0
+                    for edge in record[0]:
+                        ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
+                        price = price / ratio
+
+                    pool["token0_usd_price"] = price
+                    pool["token1_usd_price"] = price * (
+                        pool["token0_balance"] / pool["token1_balance"]
+                    )
+                else:
+                    print(pool)
+
+        # records, _, _= await client.execute_query(query, **params)
+        # # devide by 0 ?
+        # for pool, record in zip(pools,records):
+        #     if record:
+        #         price = 1.0
+        #         for edge in record[0]:
+        #             ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
+        #             price = price / ratio
+
+        #         pool["token0_usd_price"] = price
+        #         pool["token1_usd_price"] = price * (
+        #             pool["token0_balance"] / pool["token1_balance"]
+        #         )
+        #     else:
+        #         print(pool)
 
     tasks = []
-    for pool in results[Entity.POOL]:
-        await _run(graph_client, pool)
-    #     task = asyncio.create_task(_run(graph_client, pool))
-    #     tasks.append(task)
+    BATCH_SIZE = 200
+    for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):
+        batch = results[Entity.POOL][i : i + BATCH_SIZE]
+        task = asyncio.create_task(_run(graph_client, batch))
+        tasks.append(task)
 
-    # await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)

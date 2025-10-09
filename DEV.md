@@ -8,7 +8,7 @@ update python
 remove service
 remember todo
 # Dev:
-- memgraph - persis - increase paralel/concurrent, timeout? use async here
+- constrain
 
 - larger scale
 - real time
