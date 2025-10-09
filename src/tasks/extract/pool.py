@@ -1,6 +1,6 @@
 import asyncio
 
-from neo4j import AsyncDriver
+from neo4j import AsyncDriver, AsyncSession
 
 from src.abis.function import FUNCTION_HEX_SIGNATURES
 from src.clients.rpc_client import RpcClient
@@ -146,26 +146,30 @@ async def pool_update_graph(
         MERGE (b:TOKEN {address: pool.token1_address})
 
         MERGE (a)-[p_ab:POOL {address: pool.pool_address}]->(b)
-        SET p_ab.src_balance = pool.token0_balance,
+        SET p_ab.src_address = pool.token0_address,
+            p_ab.tgt_address = pool.token1_address,
+            p_ab.src_balance = pool.token0_balance,
             p_ab.tgt_balance = pool.token1_balance
 
         MERGE (b)-[p_ba:POOL {address: pool.pool_address}]->(a)
-        SET p_ba.src_balance = pool.token1_balance,
+        SET p_ba.src_address = pool.token1_address,
+            p_ba.tgt_address = pool.token0_address,
+            p_ba.src_balance = pool.token1_balance,
             p_ba.tgt_balance = pool.token0_balance
         """
 
-        # do not use session here, query in next step will execute before graph fully update
         await graph_client.execute_query(query, **params)
 
     tasks = []
     BATCH_SIZE = 500
     for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):
-        batch = results[Entity.POOL][i : i + BATCH_SIZE]
+        batch = results[Entity.POOL][i:i+BATCH_SIZE]
         task = asyncio.create_task(_process_batch(batch))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
 
+# ----------------------------------------------------------
 
 async def pool_enrich_token_price(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
@@ -182,54 +186,56 @@ async def pool_enrich_token_price(
                 }
                 for pool in pools
             ],
-            "usdt_address": "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower(),
+            "usdt_address": "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
         }
+
         query = """
             UNWIND $pools AS pool
             MATCH (start:TOKEN {address: pool.token0_address}), (end:TOKEN {address: $usdt_address})
-            MATCH p = (start)-[*BFS..10]-(end)
-            RETURN relationships(p) AS edges
+            CALL {
+                WITH start, end, pool
+                MATCH p = (start)-[*BFS..5]->(end)
+                RETURN relationships(p) AS edges
+                LIMIT 1
+            }
+            RETURN pool.pool_address AS pool_address, edges
         """
 
-        async with client.session() as session:
-            result = await session.run(query, **params)
-            records = [record async for record in result]
+        records, _, _ = await client.execute_query(query, **params)
+        
+        price_map = {}
+        for record in records:
+            pool_address = record["pool_address"]
+            edges = record["edges"]
 
-            # devide by 0 ?
-            for pool, record in zip(pools, records):
-                if record:
-                    price = 1.0
-                    for edge in record[0]:
+            if edges:
+                price = 1.0
+                for edge in edges:
+                    try:
                         ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
                         price = price / ratio
-
-                    pool["token0_usd_price"] = price
-                    pool["token1_usd_price"] = price * (
-                        pool["token0_balance"] / pool["token1_balance"]
-                    )
-                else:
-                    print(pool)
-
-        # records, _, _= await client.execute_query(query, **params)
-        # # devide by 0 ?
-        # for pool, record in zip(pools,records):
-        #     if record:
-        #         price = 1.0
-        #         for edge in record[0]:
-        #             ratio = int(edge["src_balance"]) / int(edge["tgt_balance"])
-        #             price = price / ratio
-
-        #         pool["token0_usd_price"] = price
-        #         pool["token1_usd_price"] = price * (
-        #             pool["token0_balance"] / pool["token1_balance"]
-        #         )
-        #     else:
-        #         print(pool)
+                    except (ValueError, ZeroDivisionError) as e:
+                        print(f"Error calculating price for pool {pool_address}: {e}")
+                        price = None
+                        break
+                
+                if price is not None:
+                    price_map[pool_address] = price
+        
+        for pool in pools:
+            if pool["address"] in price_map:
+                pool["token0_usd_price"] = price_map[pool["address"]]
+                try:
+                    pool["token1_usd_price"] = price * (pool["token0_balance"] / pool["token1_balance"])
+                except ZeroDivisionError:
+                    pool["token1_usd_price"] = 0.0
+            else:
+                print(f"No path to USDT found for pool: {pool['address']}")
 
     tasks = []
     BATCH_SIZE = 200
     for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):
-        batch = results[Entity.POOL][i : i + BATCH_SIZE]
+        batch = results[Entity.POOL][i:i+BATCH_SIZE]
         task = asyncio.create_task(_run(graph_client, batch))
         tasks.append(task)
 
