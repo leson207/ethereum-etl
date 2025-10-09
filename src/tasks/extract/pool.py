@@ -11,6 +11,9 @@ def pool_init_address(results: dict[str, list], **kwargs):
     addresses = [event["pool_address"] for event in results[Entity.EVENT]]
     addresses = list(set(addresses))
     results[Entity.POOL] = [{"address": address} for address in addresses]
+    # for i in results[Entity.POOL]:
+    #     if i["address"].lower()=="0xc7bbec68d12a0d1830360f8ec58fa599ba1b0e9b" and i["address"]!="0xc7bBeC68d12a0d1830360F8Ec58fA599bA1b0e9b":
+    #         raise
 
 
 # -----------------------------------------------------------
@@ -125,8 +128,8 @@ async def pool_update_graph(
 ):
     async def _run(client: AsyncDriver, pool: dict):
         query = """
-            MERGE (a:Token {address: $token0_address})
-            MERGE (b:Token {address: $token1_address})
+            MERGE (a:TOKEN {address: $token0_address})
+            MERGE (b:TOKEN {address: $token1_address})
 
             MERGE (a)-[p_ab:POOL {address: $pool_address}]->(b)
             SET p_ab.src_balance = $token0_balance,
@@ -160,8 +163,8 @@ async def pool_enrich_token_price(
     async def _run(client: AsyncDriver, pool: dict):
         USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
         query = """
-            MATCH (start:Token {address: $start_address}), (end:Token {address: $end_address})
-            MATCH p = (start)-[*BFS..5]-(end)
+            MATCH (start:TOKEN {address: $start_address}), (end:TOKEN {address: $end_address})
+            MATCH p = (start)-[*BFS..10]-(end)
             RETURN relationships(p) AS edges
         """
 
@@ -179,9 +182,8 @@ async def pool_enrich_token_price(
             pool["token1_usd_price"] = price * (
                 pool["token0_balance"] / pool["token1_balance"]
             )
-            # print(pool)
-            # print()
-            # print()
+        else:
+            print(pool)
 
     tasks = []
     for pool in results[Entity.POOL]:

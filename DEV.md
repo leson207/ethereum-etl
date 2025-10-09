@@ -8,12 +8,6 @@ update python
 remove service
 remember todo
 # Dev:
-- test then commit
-- add sql_schema to table file
-- then commit
-
-- better shortest path query
-- why the address got lower?
 - memgraph - persis - increase paralel/concurrent, timeout? use async here
 
 - larger scale
