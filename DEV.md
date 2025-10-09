@@ -2,13 +2,12 @@
 note to remove at data type at the end of use.
 
 empty to none?
-normlaize address
+normlaize address - i mean the rest which not normalize yet?
 docker compose
 update python
 remove service
 remember todo
 # Dev:
-- usdt is token0 do not work
 - constrain
 
 - larger scale

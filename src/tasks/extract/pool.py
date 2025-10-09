@@ -4,16 +4,15 @@ from neo4j import AsyncDriver
 
 from src.abis.function import FUNCTION_HEX_SIGNATURES
 from src.clients.rpc_client import RpcClient
+from src.logger import logger
 from src.utils.enumeration import Entity
 
+USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
 
 def pool_init_address(results: dict[str, list], **kwargs):
     addresses = [event["pool_address"] for event in results[Entity.EVENT]]
     addresses = list(set(addresses))
     results[Entity.POOL] = [{"address": address} for address in addresses]
-    # for i in results[Entity.POOL]:
-    #     if i["address"].lower()=="0xc7bbec68d12a0d1830360f8ec58fa599ba1b0e9b" and i["address"]!="0xc7bBeC68d12a0d1830360F8Ec58fA599bA1b0e9b":
-    #         raise
 
 
 # -----------------------------------------------------------
@@ -186,9 +185,10 @@ async def pool_enrich_token_price(
                 }
                 for pool in pools
             ],
-            "usdt_address": "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
+            "usdt_address": USDT_ADDRESS
         }
 
+        # this query do not preserve pools order
         query = """
             UNWIND $pools AS pool
             MATCH (start:TOKEN {address: pool.token0_address}), (end:TOKEN {address: $usdt_address})
@@ -207,24 +207,28 @@ async def pool_enrich_token_price(
         for record in records:
             pool_address = record["pool_address"]
             edges = record["edges"]
+            if not edges:
+                continue
 
-            if edges:
-                price = 1.0
-                for edge in edges:
-                    try:
-                        numerator = int(edge["src_balance"]) * 10**token_decimals[edge["tgt_address"]]
-                        denominator = int(edge["tgt_balance"]) * 10**token_decimals[edge["src_address"]]
-                        ratio = numerator / denominator
-                        price = price / ratio
-                    except (ValueError, ZeroDivisionError) as e:
-                        print(f"Error calculating price for pool {pool_address}: {e}")
-                        price = None
-                        break
-                
-                if price is not None:
-                    price_map[pool_address] = price
+            price = 1.0
+            for edge in edges:
+                try:
+                    numerator = int(edge["src_balance"]) * 10**token_decimals[edge["tgt_address"]]
+                    denominator = int(edge["tgt_balance"]) * 10**token_decimals[edge["src_address"]]
+                    ratio = numerator / denominator
+                    price = price / ratio
+                except (ValueError, ZeroDivisionError) as e:
+                    logger.info(f"Error calculating price for pool {pool_address}: {e}")
+                    price = None
+                    break
+            
+            if price is not None:
+                price_map[pool_address] = price
         
         for pool in pools:
+            if pool["src_address"] == USDT_ADDRESS:
+                price_map[pool["address"]] = 1.0
+
             if pool["address"] in price_map:
                 pool["token0_usd_price"] = price_map[pool["address"]]
                 try:
@@ -235,7 +239,7 @@ async def pool_enrich_token_price(
                 except ZeroDivisionError:
                     pool["token1_usd_price"] = 0.0
             else:
-                print(f"No path to USDT found for pool: {pool['address']}")
+                logger.info(f"No path to USDT found for pool: {pool['address']}")
 
     token_decimals = {
         token["address"]: token["decimals"]
