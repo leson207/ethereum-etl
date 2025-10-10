@@ -14,7 +14,7 @@ from src.repositories.sqlite.raw_trace import RawTraceRepository
 from src.repositories.sqlite.trace import TraceRepository
 from src.utils.enumeration import Entity
 
-sqlite_repo={
+repo_dict={
     Entity.RAW_BLOCK: RawBlockRepository,
     Entity.BLOCK: BlockRepository,
     Entity.TRANSACTION: TransactionRepository,

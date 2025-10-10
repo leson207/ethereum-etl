@@ -24,7 +24,7 @@ from src.tasks.extract.trace import trace_init
 
 from src.tasks.finish import finish
 
-from src.tasks.export.export_sqlite import entity_func as sqlite_entity_func
+from tasks.export.sqlite import entity_func as sqlite_entity_func
 
 from src.utils.enumeration import Entity, Exporter
 

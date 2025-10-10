@@ -2,15 +2,14 @@ import argparse
 import asyncio
 
 from src.configs.connection_manager import connection_manager
-from src.repositories.sqlite.header import repo_dict
+from src.repositories.clickhouse.header import repo_dict
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--entitis", type=str)
-    parser.add_argument("--drop", default=False, action="store_true")
     parser.add_argument("--backup", default=False, action="store_true")
-    parser.add_argument("--restore", default=False, action="store_true")
+    parser.add_argument("--delete-backup", default=False, action="store_true")
 
     return parser.parse_args()
 
@@ -24,7 +23,9 @@ def main():
     for entity in entitis:
         if entity in repo_dict:
             repo = repo_dict[entity]()
-            repo.create(drop=args.drop, backup=args.backup, restore=args.restore)
+            repo.delete(backup=args.backup)
+            if args.delete_backup:
+                repo._drop_backup()
 
 
 if __name__ == "__main__":
