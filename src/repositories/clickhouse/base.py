@@ -118,12 +118,12 @@ class BaseRepository:
             self._drop(table_name)
 
     def create(
-        self, exist_ok: bool = True, backup: bool = False, restore: bool = False
+        self, drop: bool = False, backup: bool = False, restore: bool = False
     ):
         if backup:
             self._backup()
 
-        if not exist_ok:
+        if drop:
             self._drop()
 
         self._create()

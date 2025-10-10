@@ -89,8 +89,8 @@ class BaseRepository:
 
         # 3. Insert all data from source table into backup table
         query = f"""
-            INSERT INTO {table_name}
-            SELECT * FROM {self.table_name}
+            INSERT INTO '{table_name}'
+            SELECT * FROM '{self.table_name}'
         """
         self.db.execute(text(query))
         self.db.commit()
@@ -98,8 +98,8 @@ class BaseRepository:
 
     def _restore(self, table_name: str = None):
         query = f"""
-            INSERT OR IGNORE INTO {self.table_name}
-            SELECT * FROM {table_name}
+            INSERT OR IGNORE INTO '{self.table_name}'
+            SELECT * FROM '{table_name}'
         """
         self.db.execute(text(query))
         self.db.commit()
@@ -107,9 +107,12 @@ class BaseRepository:
 
     def restore(self, mode: Literal["latest", "all"] = "latest"):
         query = f"""
-            SELECT table_name FROM information_schema.tables WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
-            ORDER BY strptime(substr(table_name, -19), '%Y_%m_%d_%H_%M_%S') DESC
+            SELECT name AS table_name
+            FROM sqlite_master
+            WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
+            ORDER BY table_name DESC
         """
+        #%Y_%m_%d_%H_%M_%S
         rows = self.db.execute(text(query)).fetchall()
 
         if mode == "latest":
@@ -122,8 +125,10 @@ class BaseRepository:
 
     def _drop_backup(self):
         query = f"""
-            SELECT table_name FROM information_schema.tables WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
-            ORDER BY strptime(substr(table_name, -19), '%Y_%m_%d_%H_%M_%S') DESC
+            SELECT name AS table_name
+            FROM sqlite_master
+            WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
+            ORDER BY table_name DESC
         """
         rows = self.db.execute(text(query)).fetchall()
         for row in rows:
@@ -131,12 +136,12 @@ class BaseRepository:
             self._drop(table_name)
 
     def create(
-        self, exist_ok: bool = True, backup: bool = False, restore: bool = False
+        self, drop: bool = False, backup: bool = False, restore: bool = False
     ):
         if backup:
             self._backup()
 
-        if not exist_ok:
+        if drop:
             self._drop()
 
         self._create()
@@ -180,7 +185,7 @@ class BaseRepository:
         logger.info(f"✅ Exported data from '{self.table_name}' to '{full_path}'")
 
     def exist(self):
-        query = f"SELECT * FROM information_schema.tables WHERE table_name = '{self.table_name}';"
+        query = f"SELECT name FROM sqlite_master WHERE name = '{self.table_name}';"
         res = self.db.execute(text(query)).fetchall()
 
         return res is not None
@@ -188,8 +193,11 @@ class BaseRepository:
     def query(self):
         pass
 
-    def delete(self):
-        pass
+    def delete(self, backup: bool = False):
+        if backup:
+            self._backup()
+
+        self._drop()
 
     def update(self):
         pass

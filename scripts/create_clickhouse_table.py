@@ -17,7 +17,7 @@ def create_database():
 
 def main():
     repo = EventRepository()
-    repo.create(exist_ok=False)
+    repo.create(drop=True)
     repo.inspect()
 
 

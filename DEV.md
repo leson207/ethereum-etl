@@ -7,8 +7,8 @@ docker compose
 update python
 remove service
 remember todo
+cache/precompute shortest path form weth to every token, even when add new, prefer token with highest liquid- i think i can do it my own since everything we need is bfs
 # Dev:
-- find path to weth and merge to from weth to usdt
 - create/delete table, create/delete dabase
 - parse transfer with different topic kind (use the legacy function)
 

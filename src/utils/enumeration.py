@@ -10,8 +10,6 @@ class Entity:
     TRANSFER = "transfer"
     EVENT = "event"
     ACCOUNT = "account"
-    CONTRACT = "contract"
-    ABI = "abi"
     POOL = "pool"
     TOKEN = "token"
 
