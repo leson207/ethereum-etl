@@ -21,7 +21,7 @@ def create_export_function(entity):
     return export
 
 
-entity_func = {ent: create_export_function(ent) for ent in Entity}
+entity_func = {ent: create_export_function(ent) for ent in Entity.values()}
 
 
 # entity_func = {

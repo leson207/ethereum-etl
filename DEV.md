@@ -5,14 +5,20 @@ empty to none?
 normlaize address - i mean the rest which not normalize yet?
 docker compose
 update python
-remove service
+remove service?
 remember todo
+
+rename/ or other folder structure for repository
+
 cache/precompute shortest path form weth to every token, even when add new, prefer token with highest liquid- i think i can do it my own since everything we need is bfs
-clickhouse repo operation
-nats operation
-use nats and clickhouse for export
+
+more log for storage(sqlite,ch,nats) operator script
+
 # Dev:
 - parse transfer with different topic kind (use the legacy function)
+- nats operation
+- clickhouse repo operation
+- use nats and clickhouse for export
 
 - larger scale
 - real time
