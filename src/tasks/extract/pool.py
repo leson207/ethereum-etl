@@ -7,7 +7,11 @@ from src.clients.rpc_client import RpcClient
 from src.logger import logger
 from src.utils.enumeration import Entity
 
+
 USDT_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7".lower()
+WETH_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2".lower()
+WETH_USDT_UNISWAP_V2_ADDRESS = "0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852".lower()
+
 
 def pool_init_address(results: dict[str, list], **kwargs):
     addresses = [event["pool_address"] for event in results[Entity.EVENT]]
@@ -173,7 +177,7 @@ async def pool_update_graph(
 async def pool_enrich_token_price(
     results: dict[str, list], graph_client: AsyncDriver, **kwargs
 ):
-    async def _run(client: AsyncDriver, pools: list[dict], token_decimals: dict[str,int]):
+    async def _run(client: AsyncDriver, pools: list[dict], token_decimals: dict[str,int], weth_usdt_ratio: float):
         params = {
             "pools": [
                 {
@@ -185,13 +189,13 @@ async def pool_enrich_token_price(
                 }
                 for pool in pools
             ],
-            "usdt_address": USDT_ADDRESS
+            "weth_address": WETH_ADDRESS
         }
 
         # this query do not preserve pools order
         query = """
             UNWIND $pools AS pool
-            MATCH (start:TOKEN {address: pool.token0_address}), (end:TOKEN {address: $usdt_address})
+            MATCH (start:TOKEN {address: pool.token0_address}), (end:TOKEN {address: $weth_address})
             CALL {
                 WITH start, end, pool
                 MATCH p = (start)-[*BFS..5]->(end)
@@ -226,11 +230,11 @@ async def pool_enrich_token_price(
                 price_map[pool_address] = price
         
         for pool in pools:
-            if pool["token0_address"] == USDT_ADDRESS:
+            if pool["token0_address"] == WETH_ADDRESS:
                 price_map[pool["address"]] = 1.0
 
             if pool["address"] in price_map:
-                pool["token0_usd_price"] = price_map[pool["address"]]
+                pool["token0_usd_price"] = price_map[pool["address"]] / weth_usdt_ratio
                 try:
                     numerator = pool["token0_balance"]* 10**token_decimals[pool["token1_address"]]
                     denominator = pool["token1_balance"]* 10**token_decimals[pool["token0_address"]]
@@ -241,15 +245,35 @@ async def pool_enrich_token_price(
             else:
                 logger.info(f"No path to USDT found for pool: {pool['address']}")
 
+    async def get_ratio(client: AsyncDriver):
+        query = """
+            MATCH (weth:TOKEN {address: $weth_address})
+            MATCH (usdt:TOKEN {address: $usdt_address})
+            MATCH (weth)-[pool:POOL {address: $pool_address}]->(usdt)
+            RETURN weth, usdt, pool;
+        """
+        records, _, _= await client.execute_query(
+            query,
+            weth_address=WETH_ADDRESS,
+            usdt_address=USDT_ADDRESS,
+            pool_address=WETH_USDT_UNISWAP_V2_ADDRESS
+        )
+        numerator = int(records[0]["pool"]["src_balance"]) * 10**records[0]["usdt"]["decimals"]
+        denominator = int(records[0]["pool"]["tgt_balance"]) * 10**records[0]["weth"]["decimals"]
+        ratio = numerator / denominator
+        return ratio
+
+    weth_usdt_ratio = await get_ratio(graph_client)
+
     token_decimals = {
         token["address"]: token["decimals"]
         for token in results[Entity.TOKEN]
     }
     tasks = []
-    BATCH_SIZE = 200
+    BATCH_SIZE = 500
     for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):
         batch = results[Entity.POOL][i:i+BATCH_SIZE]
-        task = asyncio.create_task(_run(graph_client, batch, token_decimals))
+        task = asyncio.create_task(_run(graph_client, batch, token_decimals, weth_usdt_ratio))
         tasks.append(task)
 
     await asyncio.gather(*tasks)

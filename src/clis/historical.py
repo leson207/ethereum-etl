@@ -48,7 +48,7 @@ async def main(
         await connection_manager.init(exporters+ ["rpc", "memgraph"])
         async with connection_manager["memgraph"].session() as session:
             # await session.run("DROP ALL INDEXES")
-            await session.run("MATCH (n) DETACH DELETE n")
+            # await session.run("MATCH (n) DETACH DELETE n")
 
             await session.run("DROP CONSTRAINT ON (t:TOKEN) ASSERT t.address IS UNIQUE;")
             await session.run("CREATE CONSTRAINT ON (t:TOKEN) ASSERT t.address IS UNIQUE;")

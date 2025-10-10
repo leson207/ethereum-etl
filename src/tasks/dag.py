@@ -41,7 +41,7 @@ entity_func = {
     Entity.EVENT: [uniswap_v2_event_init, uniswap_v3_event_init],
     Entity.ACCOUNT: [account_init_address, account_enrich_balance],
     Entity.POOL: [pool_init_address, pool_enrich_token_address, pool_enrich_token_balance, pool_enrich_token_balance, pool_update_graph, pool_enrich_token_price],
-    Entity.TOKEN: [token_init_address, token_enrich_info],
+    Entity.TOKEN: [token_init_address, token_enrich_info, token_update_graph],
 
     Entity.RAW_TRACE: [raw_trace_init],
     Entity.TRACE: [trace_init]

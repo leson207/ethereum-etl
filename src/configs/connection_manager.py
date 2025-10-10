@@ -49,7 +49,7 @@ class ConnectionManager:
             "jetstream"
         ].add_stream(
             name=env.DATABASE_NAME, subjects=[f"{env.NETWORK}.*"]
-        )  # TODO: this is create exprestion (like create databaes) check if it should be here
+        )  # TODO: this is create exprestion (like create databaes/table) check if it should be here
 
         logger.info(f"Created stream '{env.DATABASE_NAME}'")
 
