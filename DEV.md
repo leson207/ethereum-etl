@@ -10,14 +10,17 @@ remember todo
 
 rename/ or other folder structure for repository
 
-cache/precompute shortest path form weth to every token, even when add new, prefer token with highest liquid- i think i can do it my own since everything we need is bfs
+more log for storage(sqlite,ch,nats) operator script or in repo(for nats)
 
-more log for storage(sqlite,ch,nats) operator script
+create/delete database/stream scripts?
 
+check v3 price
+
+create database/stream or may be table in a aggregate script file? exporter_entity pair?
 # Dev:
 - parse transfer with different topic kind (use the legacy function)
-- nats operation
-- clickhouse repo operation
+- test nats operation
+- test clickhouse operation
 - use nats and clickhouse for export
 
 - larger scale
