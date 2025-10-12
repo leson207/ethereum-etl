@@ -24,7 +24,7 @@ async def main():
 
     for entity in entities:
         if entity in Entity.values():
-            repo = BaseRepository(stream=env.DATABASE_NAME, subject=entity)
+            repo = BaseRepository(stream=env.DATABASE_NAME, subject=f"{env.NETWORK}.{entity}")
             await repo.create(drop=args.drop)
 
 
