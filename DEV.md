@@ -1,8 +1,6 @@
 # Target
 note to remove at data type at the end of use.
 
-empty to none?
-normlaize address - i mean the rest which not normalize yet?
 docker compose
 update python
 remove service?
