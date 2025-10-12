@@ -45,12 +45,6 @@ class ConnectionManager:
         self.conn["nats"] = await nats.connect(env.NATS_SERVER)
         self.conn["jetstream"] = self.conn["nats"].jetstream()
 
-        await self.conn[
-            "jetstream"
-        ].add_stream(
-            name=env.DATABASE_NAME, subjects=[f"{env.NETWORK}.*"]
-        )  # TODO: this is create exprestion (like create databaes/table) check if it should be here
-
         logger.info(f"Created stream '{env.DATABASE_NAME}'")
 
     def init_clickhouse(self):

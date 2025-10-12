@@ -6,13 +6,10 @@ update python
 remove service?
 remember todo
 
-rename/ or other folder structure for repository
-
 create/delete database/stream scripts?
 
 check v3 price
 
-create database/stream or may be table in a aggregate script file? exporter_entity pair?
 # Dev:
 - test nats repo operation
 - test clickhouse repo operation

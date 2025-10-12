@@ -1,8 +1,6 @@
 import argparse
 import os
 
-from src.configs.environment import env
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -16,10 +14,6 @@ def main():
     os.makedirs("artifacts/dbs", exist_ok=True)
     os.makedirs("artifacts/logs", exist_ok=True)
     os.makedirs("artifacts/data", exist_ok=True)
-    os.makedirs("artifacts/debug", exist_ok=True)
-    os.makedirs("artifacts/debug/json", exist_ok=True)
-    # TODO: Debug function aware of debug variable
-    # TODO: create database for clickhouse
 
 
 if __name__ == "__main__":
