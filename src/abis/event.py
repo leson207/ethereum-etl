@@ -129,8 +129,8 @@ for dex in EVENT_ABI:
         EVENT_TEXT_SIGNATURES[dex][event] = text_signature
         EVENT_HEX_SIGNATURES[dex][event] = hex_signature
 
-
-def decode_event_input(dex, event, topics, data):
+# This use for uniswapv2 like transfer
+def decode_event_input_specific(dex, event, topics, data):
     inputs = EVENT_ABI[dex][event]["inputs"]
 
     indexed_inputs = [input for input in inputs if input["indexed"]]
@@ -162,7 +162,7 @@ def decode_event_input(dex, event, topics, data):
     return decoded
 
 
-def decode_event_input_legacy(dex, event, topics, data):
+def decode_event_input_universal(dex, event, topics, data):
     inputs = EVENT_ABI[dex][event]["inputs"]
 
     decoded = {}

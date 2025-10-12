@@ -18,7 +18,6 @@ check v3 price
 
 create database/stream or may be table in a aggregate script file? exporter_entity pair?
 # Dev:
-- parse transfer with different topic kind (use the legacy function)
 - test nats operation
 - test clickhouse operation
 - use nats and clickhouse for export
