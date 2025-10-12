@@ -4,7 +4,7 @@ from src.logger import logger
 
 class BaseRepository:
     def __init__(self, stream: str, subject: str):
-        self.stream = stream
+        self.stream = stream # like database: sample
         self.subject = subject  # like table: accout, event, ...
 
     async def exist(self):
@@ -18,10 +18,10 @@ class BaseRepository:
         await connection_manager["jetstream"].purge_stream(
             self.stream, filter=self.subject
         )
-        logger.info(f"Deleted subject {self.subject}")
+        logger.info(f"Deleted subject {self.subject}!")
 
     async def _create(self):
-        logger.info(f"Created subject {self.subject}")
+        logger.info(f"Created subject {self.subject}!")
 
     async def create(self, drop=True):
         if drop and await self.exist():

@@ -3,18 +3,18 @@ import asyncio
 
 from src.configs.connection_manager import connection_manager
 from src.configs.environment import env
-
+from src.logger import logger
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--foo", action="store_true", help="place holder arg.")
-    parser.add_argument("--bar", action="store_true", help="place holder arg.")
+    parser.add_argument("--name", type=str, default=env.DATABASE_NAME)
     return parser.parse_args()
 
 
 async def main():
-    await connection_manager["jetstream"].delete_stream(env.DATABASE_NAME)
-
+    args = parse_args()
+    await connection_manager["jetstream"].delete_stream(args["name"])
+    logger.info(f"Drop {args['name']} stream!")
 
 if __name__ == "__main__":
     with asyncio.Runner() as runner:

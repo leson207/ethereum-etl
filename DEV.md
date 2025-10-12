@@ -8,16 +8,14 @@ remember todo
 
 rename/ or other folder structure for repository
 
-more log for storage(sqlite,ch,nats) operator script or in repo(for nats)
-
 create/delete database/stream scripts?
 
 check v3 price
 
 create database/stream or may be table in a aggregate script file? exporter_entity pair?
 # Dev:
-- test nats operation
-- test clickhouse operation
+- test nats repo operation
+- test clickhouse repo operation
 - use nats and clickhouse for export
 
 - larger scale

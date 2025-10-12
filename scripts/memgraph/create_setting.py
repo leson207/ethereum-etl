@@ -2,6 +2,7 @@ import argparse
 import asyncio
 
 from src.configs.connection_manager import connection_manager
+from src.logger import logger
 
 
 def parse_args():
@@ -14,8 +15,13 @@ def parse_args():
 async def main():
     async with connection_manager["memgraph"].session() as session:
         await session.run("CREATE CONSTRAINT ON (t:TOKEN) ASSERT t.address IS UNIQUE;")
+        logger.info("Create node unique constraint for TOKEN!")
+
         await session.run("CREATE INDEX ON :TOKEN(address)")
+        logger.info("Create node index for TOKEN.address!")
+
         await session.run("CREATE EDGE INDEX ON :POOL(address)")
+        logger.info("Create edge index for POOL.address!")
 
 
 if __name__ == "__main__":
