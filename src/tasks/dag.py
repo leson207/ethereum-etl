@@ -97,7 +97,7 @@ def create_node(
         "graph_client": graph_client,
         "block_numbers": range(start_block, end_block + 1),
         "batch_size": end_block - start_block + 1,
-        "include_transaction": Entity.TRANSACTION in entities or Entity.WITHDRAWAL in entities
+        "include_transaction": Entity.TRANSACTION in entities
     }
 
     required_funcs = set()

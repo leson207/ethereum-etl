@@ -12,6 +12,7 @@ class PoolService:
         ]
         res = await self.client.eth_call(param_sets=[param_set])
         res = res[0]
+        print(res)
         res = decode_function_output(erc, "token0", res["result"])
         return res["token_address"]
 

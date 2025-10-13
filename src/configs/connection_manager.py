@@ -19,6 +19,12 @@ class ConnectionManager:
     def __getitem__(self, key):
         return self.conn[key]
 
+    def get(self, key):
+        if key in self.conn:
+            return self.conn[key]
+
+        return None
+
     async def init(self, exporters):
         self.exporters = exporters
         for exporter in self.exporters:

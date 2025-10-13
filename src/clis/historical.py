@@ -44,8 +44,10 @@ async def main(
 ):
     if "pool" in entities:
         await connection_manager.init(exporters+ ["rpc", "memgraph"])
+    else:
+         await connection_manager.init(exporters+ ["rpc"])
 
-    graph = Graph()
+    graph = Graph(running_queue_size)
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         async with asyncio.TaskGroup() as tg:
@@ -74,7 +76,7 @@ async def main(
                             progress,
                             task_id,
                             connection_manager["rpc"],
-                            connection_manager["memgraph"],
+                            connection_manager.get("memgraph"),
                             batch_start_block,
                             batch_end_block,
                             entities,
@@ -84,8 +86,7 @@ async def main(
 
                         graph.add_nodes(new_nodes)
 
-                    if graph.running_count < running_queue_size:
-                        await graph.run(tg, pool)
+                    await graph.run(tg, pool)
 
                     await asyncio.sleep(0.1)
 
@@ -111,13 +112,18 @@ if __name__ == "__main__":
         )
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-# --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
+# --pending-queue-size 1000 --running-queue-size 5 --request-batch-size 30 \
+# --entities raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,pool,token,raw_trace,trace \
+# --exporters sqlite
+
+# python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
+# --pending-queue-size 1000 --running-queue-size 5 --request-batch-size 30 \
 # --entities raw_block,block,transaction,withdrawal --exporters sqlite
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-# --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
+# --pending-queue-size 1000 --running-queue-size 5 --request-batch-size 30 \
 # --entities raw_receipt,receipt,log,transfer,event --exporters sqlite
 
 # python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
-# --pending-queue-size 1000 --running-queue-size 100 --request-batch-size 30 \
+# --pending-queue-size 1000 --running-queue-size 5 --request-batch-size 30 \
 # --entities raw_trace,trace --exporters sqlite

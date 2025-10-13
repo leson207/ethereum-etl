@@ -1,4 +1,4 @@
-from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input
+from src.abis.event import EVENT_HEX_SIGNATURES, decode_event_input_universal as decode_event_input
 from src.utils.enumeration import Entity
 
 

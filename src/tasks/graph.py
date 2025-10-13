@@ -17,11 +17,12 @@ async def to_thread(func, /, *args, executor=None, **kwargs):
 
 
 class Graph:
-    def __init__(self):
+    def __init__(self, running_queue_size: int):
         self.nodes: dict[str, Node] = {}
 
         # self.running_sync_count = 0
         # self.running_async_count = 0
+        self.running_queue_size = running_queue_size
         self.pending_count = 0
         self.running_count = 0
 
@@ -41,6 +42,9 @@ class Graph:
                     del self.nodes[name]
 
         for name, node in self.nodes.items():
+            if self.running_count >= self.running_queue_size:
+                break
+
             if node.status != "pending":
                 continue
             
@@ -55,6 +59,7 @@ class Graph:
                 coro = to_thread(node.func, executor=thread_pool, **node.kwargs)
 
             node.task = task_group.create_task(coro, name=name)
+
             node.status = "running"
             self.pending_count = self.pending_count - 1
             self.running_count = self.running_count + 1
