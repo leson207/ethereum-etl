@@ -55,6 +55,7 @@ async def token_enrich_info(
         for i in range(0, len(tokens)):
             token = tokens[i]
             if any("error" in i for i in responses[i * 4 : (i + 1) * 4]):
+                results[Entity.TOKEN].remove(token)  # TODO: fix this to hold error token?
                 continue
 
             name, symbol, decimals, total_supply = responses[i * 4 : (i + 1) * 4]

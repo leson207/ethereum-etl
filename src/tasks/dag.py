@@ -63,8 +63,8 @@ func_func = {
     pool_init_address: [uniswap_v2_event_init, uniswap_v3_event_init],
     pool_enrich_token_address: [pool_init_address],
     pool_enrich_token_balance: [pool_enrich_token_address],
-    pool_update_graph: [pool_enrich_token_balance],
-    pool_enrich_token_price: [token_update_graph, pool_update_graph],
+    pool_update_graph: [pool_enrich_token_balance, token_update_graph],
+    pool_enrich_token_price: [pool_update_graph],
     
     token_init_address: [pool_enrich_token_address],
     token_enrich_info: [token_init_address],

@@ -9,10 +9,11 @@ async def raw_trace_init(
 
     for block_number, response in zip(block_numbers, responses):
         for data in response["result"]:
-            transaction_hash = data["transactionHash"]
-            raw_trace = {
-                "block_number": block_number,
-                "transaction_hash": transaction_hash,
-                "data": data,
-            }
-            results[Entity.RAW_TRACE].append(raw_trace)
+            transaction_hash = data.get("transactionHash")
+            if transaction_hash:
+                raw_trace = {
+                    "block_number": block_number,
+                    "transaction_hash": transaction_hash,
+                    "data": data,
+                }
+                results[Entity.RAW_TRACE].append(raw_trace)

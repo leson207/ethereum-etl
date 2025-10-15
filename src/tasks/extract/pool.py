@@ -56,8 +56,14 @@ async def pool_enrich_token_address(
             token0, token1 = responses[
                 i * num_enrich_field : (i + 1) * num_enrich_field
             ]
+
+            if token0["result"]=="0x" and token0["result"]=="0x": # the pool address actually a token address
+                results[Entity.POOL].remove(pool)
+                continue
+
             pool["token0_address"] = "0x" + token0["result"][-40:]
             pool["token1_address"] = "0x" + token1["result"][-40:]
+
 
     tasks = []
     batch_size = 10
@@ -199,23 +205,25 @@ async def pool_enrich_token_price(
             CALL {
                 WITH start, end, pool
                 MATCH p = (start)-[*BFS..5]->(end)
-                RETURN relationships(p) AS edges
+                WHERE NONE(n IN nodes(p) WHERE n.decimals IS NULL)
+                RETURN nodes(p) AS nodes, relationships(p) AS edges
                 LIMIT 1
             }
-            RETURN pool.pool_address AS pool_address, edges
+            RETURN pool.pool_address AS pool_address, nodes, edges
         """
 
+        # if there no path, the number of record != number of pool
         records, _, _ = await client.execute_query(query, **params)
-        
+
         price_map = {}
         for record in records:
             pool_address = record["pool_address"]
-            edges = record["edges"]
-            if not edges:
-                continue
 
-            price = 1.0
-            for edge in edges:
+            for node in record["nodes"]:
+                token_decimals[node["address"]] = node["decimals"]
+            
+            price = 1.0            
+            for edge in record["edges"]:
                 try:
                     numerator = int(edge["src_balance"]) * 10**token_decimals[edge["tgt_address"]]
                     denominator = int(edge["tgt_balance"]) * 10**token_decimals[edge["src_address"]]
@@ -244,7 +252,7 @@ async def pool_enrich_token_price(
                     pool["token1_usd_price"] = 0.0
             else:
                 logger.info(f"No path to USDT found for pool: {pool['address']}")
-
+            
     async def get_ratio(client: AsyncDriver):
         query = """
             MATCH (weth:TOKEN {address: $weth_address})
@@ -269,6 +277,7 @@ async def pool_enrich_token_price(
         token["address"]: token["decimals"]
         for token in results[Entity.TOKEN]
     }
+    token_decimals[USDT_ADDRESS] = 6
     tasks = []
     BATCH_SIZE = 500
     for i in range(0, len(results[Entity.POOL]), BATCH_SIZE):

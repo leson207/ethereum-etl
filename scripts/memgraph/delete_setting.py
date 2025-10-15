@@ -13,12 +13,6 @@ def parse_args():
 
 async def main():
     async with connection_manager["memgraph"].session() as session:
-        await session.run("DROP ALL INDEXES")
-        logger.info("Drop all existing index!")
-
-        await session.run("DROP ALL CONSTRAINTS")
-        logger.info("Drop all existing constraint!")
-
         await session.run("MATCH (n) DETACH DELETE n")
         logger.info("Drop all existing node!")
 
