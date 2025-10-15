@@ -27,6 +27,7 @@ class RpcClient:
         )
         self.request_counter = itertools.count()
         self.throttler = Throttler(rate_limit=50, period=1)
+        self.connection_pool = asyncio.Semaphore(10)
 
         self.max_retries = max_retries
         self.backoff = backoff
@@ -129,8 +130,9 @@ class RpcClient:
         return None
 
     async def _post(self, payload: str, attempt: int = 1):
-        async with self.throttler:
-            responses = await self.client.post(self.pick_uri(attempt), content=payload)
+        async with self.connection_pool:
+            async with self.throttler:
+                responses = await self.client.post(self.pick_uri(attempt), content=payload)
 
         return responses
 
