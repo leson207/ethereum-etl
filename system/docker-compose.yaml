@@ -15,14 +15,14 @@ services:
         soft: 262144
         hard: 262144
     volumes:
-      - ./volumes/clickhouse/data:/var/lib/clickhouse/
-      - ./volumes/clickhouse/logs:/var/log/clickhouse-server/
+      - ./volumes/clickhouse/data:/var/lib/clickhouse/:Z
+      - ./volumes/clickhouse/logs:/var/log/clickhouse-server/:Z
     networks:
       - ethereum-etl-net
     init: true
 
   ch-ui:
-    image: ghcr.io/caioricciuti/ch-ui:latest
+    image: caioricciuti/ch-ui:latest
     container_name: clickhouse-ui
     restart: always
     ports:
@@ -30,7 +30,10 @@ services:
     depends_on:
       - ch-server
     environment:
-      VITE_CLICKHOUSE_REQUEST_TIMEOUT: "30000"  # Optional: Request timeout in milliseconds
+      VITE_CLICKHOUSE_URL: "http://localhost:18123"
+      VITE_CLICKHOUSE_USER: "VictorJuiz"
+      VITE_CLICKHOUSE_PASS: "1865"
+      VITE_CLICKHOUSE_REQUEST_TIMEOUT: "30000"
     networks:
       - ethereum-etl-net
 
@@ -49,7 +52,7 @@ services:
       - "--js"
       - "--sd=/data"
     volumes:
-      - ./volumes/nats:/data
+      - ./volumes/nats:/data:Z
       - ./nats.conf:/etc/nats/nats.conf:ro
     networks:
       - ethereum-etl-net

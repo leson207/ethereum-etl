@@ -9,14 +9,13 @@ class BaseRepository:
 
     async def exist(self):
         stream_info = await connection_manager["jetstream"].stream_info(self.stream)
-        return (
-            self.subject in stream_info.state.subjects
-            and stream_info.state.subjects[self.subject] > 0
-        )
+        subjects = stream_info.state.subjects
+        if subjects is not None and self.subject in stream_info.state.subjects and stream_info.state.subjects[self.subject] > 0:
+            return True
 
     async def drop(self):
         await connection_manager["jetstream"].purge_stream(
-            self.stream, filter=self.subject
+            self.stream, subject=self.subject
         )
         logger.info(f"Deleted subject {self.subject}!")
 

@@ -51,7 +51,7 @@ class ConnectionManager:
         self.conn["nats"] = await nats.connect(env.NATS_SERVER)
         self.conn["jetstream"] = self.conn["nats"].jetstream()
 
-        logger.info(f"Created stream '{env.DATABASE_NAME}'")
+        logger.info(f"NATS SERVER URL: {env.NATS_SERVER}")
 
     def init_clickhouse(self):
         from urllib.parse import quote_plus

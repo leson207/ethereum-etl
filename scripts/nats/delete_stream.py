@@ -13,8 +13,8 @@ def parse_args():
 
 async def main():
     args = parse_args()
-    await connection_manager["jetstream"].delete_stream(args["name"])
-    logger.info(f"Drop {args['name']} stream!")
+    await connection_manager["jetstream"].delete_stream(args.name)
+    logger.info(f"Drop {args.name} stream!")
 
 if __name__ == "__main__":
     with asyncio.Runner() as runner:

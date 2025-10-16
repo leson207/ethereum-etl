@@ -9,7 +9,7 @@ from src.utils.enumeration import Entity
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--entities", type=str)
+    parser.add_argument("--entities", type=str, default="all")
     parser.add_argument("--drop", action="store_false")
 
     return parser.parse_args()

@@ -24,6 +24,7 @@ from src.tasks.extract.trace import trace_init
 
 from src.tasks.finish import finish
 
+from src.tasks.export.nats import entity_func as nats_entity_func
 from src.tasks.export.sqlite import entity_func as sqlite_entity_func
 
 from src.utils.enumeration import Entity, Exporter
@@ -74,7 +75,10 @@ func_func = {
     trace_init: [raw_trace_init]
 }
 
-exporter_entity_func = {Exporter.SQLITE: sqlite_entity_func}
+exporter_entity_func = {
+    Exporter.NATS: nats_entity_func,
+    Exporter.SQLITE: sqlite_entity_func
+}
 
 
 def create_node(
