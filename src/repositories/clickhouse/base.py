@@ -6,9 +6,9 @@ import sqlalchemy as sa
 from sqlalchemy import text
 from tabulate import tabulate
 
-from src.configs.clickhouse import session
 from src.configs.environment import env
 from src.logger import logger
+from src.configs.connection_manager import connection_manager
 
 
 class BaseRepository:
@@ -16,7 +16,7 @@ class BaseRepository:
         self,
         sql_schema: Type,
     ):
-        self.db = session
+        self.db = connection_manager["clickhouse"]
         self.sql_schema = sql_schema
         self.table_name = sql_schema.__tablename__
         self.primary_keys = [col.name for col in sql_schema.__table__.primary_key]
@@ -40,7 +40,7 @@ class BaseRepository:
         res = self.db.execute(text(f"DESCRIBE {self.table_name};"))
         print(tabulate(res.fetchall(), headers=res.keys(), tablefmt="pretty"))
 
-    def _create(self, table_name: str = None):
+    def _create(self, table_name: str = None, physic_talbe_only: bool = False):
         table_name = table_name or self.table_name
         query = f"""
             CREATE TABLE IF NOT EXISTS {table_name}
@@ -72,7 +72,7 @@ class BaseRepository:
             table_name = f"{self.table_name}_{timestamp}"
 
         # 2. Create backup table
-        self._create(table_name=table_name)
+        self._create(table_name=table_name, physic_talbe_only=True)
 
         # 3. Insert all data from source table into backup table
         query = f"""
@@ -85,7 +85,7 @@ class BaseRepository:
 
     def _restore(self, table_name: str = None):
         query = f"""
-            INSERT OR IGNORE INTO {self.table_name}
+            INSERT INTO {self.table_name}
             SELECT * FROM {table_name}
         """
         self.db.execute(text(query))
@@ -94,8 +94,10 @@ class BaseRepository:
 
     def restore(self, mode: Literal["latest", "all"] = "latest"):
         query = f"""
-            SELECT table_name FROM information_schema.tables WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
-            ORDER BY strptime(substr(table_name, -19), '%Y_%m_%d_%H_%M_%S') DESC
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE match(table_name, '^{self.table_name}_\\d{{4}}_\\d{{2}}_\\d{{2}}_\\d{{2}}_\\d{{2}}_\\d{{2}}$')
+            ORDER BY substr(table_name, -19) DESC
         """
         rows = self.db.execute(text(query)).fetchall()
 
@@ -110,7 +112,7 @@ class BaseRepository:
     def _drop_backup(self):
         query = f"""
             SELECT table_name FROM information_schema.tables WHERE table_name LIKE '{self.table_name}_%_%_%_%_%_%'
-            ORDER BY strptime(substr(table_name, -19), '%Y_%m_%d_%H_%M_%S') DESC
+            ORDER BY substr(table_name, -19) DESC
         """
         rows = self.db.execute(text(query)).fetchall()
         for row in rows:
@@ -163,8 +165,11 @@ class BaseRepository:
     def query(self):
         pass
 
-    def delete(self):
-        pass
+    def delete(self, backup: bool = False):
+        if backup:
+            self._backup()
+
+        self._drop()
 
     def update(self):
         pass

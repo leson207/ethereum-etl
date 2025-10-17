@@ -7,10 +7,10 @@ from src.repositories.clickhouse.header import repo_dict
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--entities", type=str)
-    parser.add_argument("--drop", action="store_false")
-    parser.add_argument("--backup", action="store_false")
-    parser.add_argument("--restore", action="store_false")
+    parser.add_argument("--entities", type=str, default="all")
+    parser.add_argument("--drop", default=False, action="store_true")
+    parser.add_argument("--backup", default=False, action="store_true")
+    parser.add_argument("--restore", default=False, action="store_true")
 
     return parser.parse_args()
 
@@ -30,6 +30,6 @@ def main():
 
 if __name__ == "__main__":
     with asyncio.Runner() as runner:
-        runner.run(connection_manager.init(["clcikhouse"]))
+        runner.run(connection_manager.init(["clickhouse"]))
         main()
         runner.run(connection_manager.close())

@@ -31,6 +31,6 @@ def main():
 
 if __name__ == "__main__":
     with asyncio.Runner() as runner:
-        runner.run(connection_manager.init(["sqlite"]))
+        runner.run(connection_manager.init(["clickhouse"]))
         main()
         runner.run(connection_manager.close())

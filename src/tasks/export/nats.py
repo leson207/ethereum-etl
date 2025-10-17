@@ -5,6 +5,7 @@ import orjson
 from src.configs.connection_manager import connection_manager
 from src.utils.enumeration import Entity
 from src.configs.environment import env
+from src.logger import logger
 
 
 def create_export_function(entity):
@@ -16,8 +17,10 @@ def create_export_function(entity):
                 payload = json.dumps(item).encode()
 
             await connection_manager["jetstream"].publish(
-                subject=f"{env.NETWORK}.{entity}", payload=payload
+                subject=f"{env.NETWORK}{env.ENVIRONMENT_NAME}.{entity}", payload=payload
             )  # TypeError: Integer exceeds 64-bit range
+            
+        logger.info(f"Publish {len(results[entity])} entity to {env.NETWORK}{env.ENVIRONMENT_NAME}.{entity} subject!")
 
     export.__name__ = f"export_{entity}"
     return export

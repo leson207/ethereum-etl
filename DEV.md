@@ -5,13 +5,11 @@ remove service?
 
 check v3 price
 
+nats-ui: nats-box, convoyer, ...
+messagepack
+
 # Dev:
-
-- test nats repo operation
-- test clickhouse repo operation
-- use nats and clickhouse for export
-- docker compose
-
+- docker compose wih memgraph
 - real time
 
 - pool: hold error pool or find a way to get it token_address (some error pool: 0x8eea6cc08d824b20efb3bf7c248de694cb1f75f4, 0xbcca60bb61934080951369a648fb03df4f96263c, 0x00a0be1bbc0c99898df7e6524bf16e893c1e3bb9)

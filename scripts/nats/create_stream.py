@@ -9,7 +9,7 @@ from src.logger import logger
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default=env.DATABASE_NAME)
-    parser.add_argument("--subjects", type=str, default=f"{env.NETWORK}.*")
+    parser.add_argument("--subjects", type=str, default=f"{env.NETWORK}{env.ENVIRONMENT_NAME}.*")
     return parser.parse_args()
 
 
@@ -18,7 +18,7 @@ async def main():
     await connection_manager["jetstream"].add_stream(
         name=args.name, subjects=args.subjects.split(",")
     )
-    logger.info(f"Create {args.name} stream with {args.subjects} subjects!")
+    logger.info(f"Create stream {args.name} with {args.subjects} subjects!")
 
 
 if __name__ == "__main__":

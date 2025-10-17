@@ -1,6 +1,5 @@
 from sqlalchemy import text
 
-from src.configs.environment import env
 from src.logger import logger
 from src.repositories.clickhouse.base import BaseRepository
 from src.schemas.sql.event import Event as SQL_Event
@@ -19,12 +18,12 @@ class EventRepository(BaseRepository):
         self.db.execute(text(f"DROP TABLE IF EXISTS {table_name};"))
         logger.info(f"✅ Dropped table '{table_name}'!")
 
-        self.db.execute(text(f"DROP TABLE IF EXISTS {table_name}_mat;"))
-        logger.info(f"✅ Dropped table '{table_name}_mat'!")
+        self.db.execute(text(f"DROP TABLE IF EXISTS {table_name}_materialized;"))
+        logger.info(f"✅ Dropped table '{table_name}_materialized'!")
 
         self.db.commit()
 
-    def _create(self, table_name: str = None):
+    def _create(self, table_name: str = None, physic_talbe_only: bool = False):
         table_name = table_name or self.table_name
 
         #--------------------------------------------------------
@@ -60,12 +59,13 @@ class EventRepository(BaseRepository):
                 updated_time      DateTime DEFAULT now()
             )
             ENGINE = NATS
-            SETTINGS nats_url = '{env.NATS_SERVER}',
+            SETTINGS nats_url = 'nats://nats-server:4222',
                     nats_subjects = 'ethereum.event',
                     nats_format = 'JSONEachRow',
                     date_time_input_format = 'best_effort';
         """
-        self.db.execute(text(query))
+        if not physic_talbe_only:
+            self.db.execute(text(query))
 
         #--------------------------------------------------------
         query = f"""
@@ -99,17 +99,19 @@ class EventRepository(BaseRepository):
 
                 updated_time      DateTime DEFAULT now()
             )
-            ENGINE = MergeTree()
-            ORDER BY (block_number, transaction_hash, log_index);
+            ENGINE = ReplacingMergeTree(updated_time)
+            ORDER BY (block_number, transaction_hash, log_index)
+            PRIMARY KEY (block_number, transaction_hash, log_index);
         """
         self.db.execute(text(query))
 
         #--------------------------------------------------------
         query = f"""
-            CREATE MATERIALIZED VIEW {table_name}_mat to {table_name}
+            CREATE MATERIALIZED VIEW {table_name}_materialized to {table_name}
             AS SELECT * FROM {table_name}_nats;
         """
-        self.db.execute(text(query))
+        if not physic_talbe_only:
+            self.db.execute(text(query))
 
         #--------------------------------------------------------
         self.db.commit()
