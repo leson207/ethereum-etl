@@ -30,7 +30,7 @@ class Graph:
         self.nodes.update(new_nodes)
         self.pending_count = self.pending_count + len(new_nodes)
 
-    async def run(self, task_group: TaskGroup, thread_pool: ThreadPoolExecutor):
+    def run(self, task_group: TaskGroup, thread_pool: ThreadPoolExecutor):
         for name, node in list(self.nodes.items()):
             if node.status == "running" and node.task.done():
                 node.status = "done"

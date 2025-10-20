@@ -86,7 +86,7 @@ async def main(
 
                         graph.add_nodes(new_nodes)
 
-                    await graph.run(tg, pool)
+                    graph.run(tg, pool)
 
                     await asyncio.sleep(0.1)
 

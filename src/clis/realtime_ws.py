@@ -10,6 +10,7 @@ from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
     Progress,
+    TaskID,
     TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
@@ -33,6 +34,56 @@ def parse_arg():
     return parser.parse_args()
 
 
+async def websocket_listener(graph: Graph, progress: Progress, task_id: TaskID):
+    ws_client = httpx.AsyncClient()
+    async with aconnect_ws(env.WEBSOCKET_URL, ws_client) as ws:
+        await ws.send_json(
+            {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "eth_subscribe",
+                "params": ["newHeads"],
+            }
+        )
+        msg = await ws.receive_text()
+        msg = orjson.loads(msg)
+        subscription_id = msg["result"]
+        logger.info(f"Subscription ID: {subscription_id}")
+        try:
+            while True:
+                message = await ws.receive_text()
+                message = orjson.loads(message)
+                block_number = int(message["params"]["result"]["number"], 16)
+
+                logger.info(f"Start process block number: {block_number}")
+
+                new_nodes = create_node(
+                    progress,
+                    task_id,
+                    connection_manager["rpc"],
+                    connection_manager.get("memgraph"),
+                    block_number,
+                    block_number,
+                    entities,
+                    exporters,
+                )
+                graph.add_nodes(new_nodes)
+
+                await asyncio.sleep(0.1)
+
+        except Exception as e:
+            logger.info(repr(e))
+        finally:
+            await ws.send_json(
+                {
+                    "id": 1,
+                    "jsonrpc": "2.0",
+                    "method": "eth_unsubscribe",
+                    "params": [subscription_id],
+                }
+            )
+
+
 async def main(
     running_queue_size: int,
     entities: list[str],
@@ -45,73 +96,25 @@ async def main(
         await connection_manager.init(exporters + ["rpc"])
 
     graph = Graph(running_queue_size)
-    ws_client = httpx.AsyncClient()
-
-    with Progress(
-        TextColumn("[bold blue]{task.description}"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TimeElapsedColumn(),
-        TimeRemainingColumn(),
-    ) as progress:
-        task_id = progress.add_task(
-            description="Block: ",
-            total=1000000,
-        )
+    async with asyncio.TaskGroup() as tg:
         with ThreadPoolExecutor(max_workers=num_workers) as pool:
-            async with asyncio.TaskGroup() as tg:
-                async with aconnect_ws(env.WEBSOCKET_URL, ws_client) as ws:
-                    await ws.send_json(
-                        {
-                            "id": 1,
-                            "jsonrpc": "2.0",
-                            "method": "eth_subscribe",
-                            "params": ["newHeads"],
-                        }
-                    )
-                    msg = await ws.receive_text()
-                    msg = orjson.loads(msg)
-                    subscription_id = msg["result"]
-                    logger.info(f"Subscription ID: {subscription_id}")
-                    try:
-                        while True:
-                            message = await ws.receive_text()
-                            message = orjson.loads(message)
-                            block_number = int(
-                                message["params"]["result"]["number"], 16
-                            )
+            with Progress(
+                TextColumn("[bold blue]{task.description}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+            ) as progress:
+                task_id = progress.add_task(
+                    description="Block: ",
+                    total=1000000,
+                )
+                tg.create_task(websocket_listener(graph, progress, task_id))
+                while True:
+                    graph.run(tg, pool)
+                    await asyncio.sleep(0.1)
 
-                            logger.info(f"Start process block number: {block_number}")
-
-                            new_nodes = create_node(
-                                progress,
-                                task_id,
-                                connection_manager["rpc"],
-                                connection_manager.get("memgraph"),
-                                block_number,
-                                block_number,
-                                entities,
-                                exporters,
-                            )
-
-                            graph.add_nodes(new_nodes)
-
-                            await graph.run(tg, pool)
-
-                            await asyncio.sleep(0.1)
-                    except Exception as e:
-                        logger.info(repr(e))
-                    finally:
-                        await ws.send_json(
-                            {
-                                "id": 1,
-                                "jsonrpc": "2.0",
-                                "method": "eth_unsubscribe",
-                                "params": [subscription_id],
-                            }
-                        )
-
-                        await connection_manager.close()
+    await connection_manager.close()
 
 
 if __name__ == "__main__":
