@@ -12,6 +12,10 @@ async def raw_block_init(
     responses = await rpc_client.get_block_by_number(
         block_numbers=block_numbers, include_transaction=include_transaction
     )
+    while "error" in responses[0] or responses[0]["result"] is None:
+        responses = await rpc_client.get_block_by_number(
+            block_numbers=block_numbers, include_transaction=include_transaction
+        )
 
     raw_blocks = [
         {

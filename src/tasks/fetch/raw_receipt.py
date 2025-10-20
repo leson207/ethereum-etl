@@ -6,6 +6,8 @@ async def raw_receipt_init(
     results: dict[str, list], rpc_client: RpcClient, block_numbers: list[int], **kwargs
 ):
     responses = await rpc_client.get_receipt_by_block_number(block_numbers=block_numbers)
+    while "error" in responses[0] or responses[0]["result"] is None:
+        responses = await rpc_client.get_receipt_by_block_number(block_numbers=block_numbers)
 
     for block_number, response in zip(block_numbers, responses):
         for data in response["result"]:

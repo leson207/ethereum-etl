@@ -7,6 +7,9 @@ async def raw_trace_init(
 ):
     responses = await rpc_client.get_trace_by_block_number(block_numbers=block_numbers)
 
+    while "error" in responses[0] or responses[0]["result"] is None:
+        responses = await rpc_client.get_trace_by_block_number(block_numbers=block_numbers)
+
     for block_number, response in zip(block_numbers, responses):
         for data in response["result"]:
             transaction_hash = data.get("transactionHash")

@@ -266,6 +266,8 @@ async def pool_enrich_token_price(
             usdt_address=USDT_ADDRESS,
             pool_address=WETH_USDT_UNISWAP_V2_ADDRESS
         )
+        if not records:
+            return 4000 # if there not path from weth to usdt, temporary use this value until get that pair
         numerator = int(records[0]["pool"]["src_balance"]) * 10**records[0]["usdt"]["decimals"]
         denominator = int(records[0]["pool"]["tgt_balance"]) * 10**records[0]["weth"]["decimals"]
         ratio = numerator / denominator

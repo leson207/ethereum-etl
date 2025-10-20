@@ -1,107 +1,134 @@
 import argparse
 import asyncio
-import time
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 import orjson
 import uvloop
 from httpx_ws import aconnect_ws
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
-from src.clients.binance_client import BinanceClient
-from src.clients.etherscan_client import EtherscanClient
-from src.clients.rpc_client import RpcClient
+from src.configs.connection_manager import connection_manager
 from src.configs.environment import env
-from src.extractors.composite import CompositeExtractor
 from src.logger import logger
+from src.tasks.dag import create_node
+from src.tasks.graph import Graph
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def parse_arg():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--entity-types", type=str, default="")
-    parser.add_argument("--exporter-types", type=str, default="")
+    parser.add_argument("--running-queue-size", type=int, default=10)
+    parser.add_argument("--entities", type=str, default=None)
+    parser.add_argument("--exporters", type=str, default=None)
+    parser.add_argument("--num-workers", type=str, default=4)
     return parser.parse_args()
 
 
-async def main(entity_types, exporter_types):
-    if "nats" in exporter_types:
-        from src.configs.nats_conn import nats_init
-        await nats_init()
+async def main(
+    running_queue_size: int,
+    entities: list[str],
+    exporters: list[str],
+    num_workers: int,
+):
+    if "pool" in entities:
+        await connection_manager.init(exporters + ["rpc", "memgraph"])
+    else:
+        await connection_manager.init(exporters + ["rpc"])
 
-    rpc_client = RpcClient()
-    res = await rpc_client.get_web3_client_version()
-    logger.info(f"Web3 Client Version: {res[0]['result']}")
-
-    etherscan_client = EtherscanClient()
-    binance_client = BinanceClient()
-
-    extractor = CompositeExtractor(
-        entity_types,
-        exporter_types,
-        rpc_client=rpc_client,
-        etherscan_client=etherscan_client,
-        binance_client=binance_client,
-    )
-
+    graph = Graph(running_queue_size)
     ws_client = httpx.AsyncClient()
 
-    async with aconnect_ws(env.WEBSOCKET_URL, ws_client) as ws:
-        await ws.send_json(
-            {
-                "id": 1,
-                "jsonrpc": "2.0",
-                "method": "eth_subscribe",
-                "params": ["newHeads"],
-            }
+    with Progress(
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+        TimeRemainingColumn(),
+    ) as progress:
+        task_id = progress.add_task(
+            description="Block: ",
+            total=1000000,
         )
-        msg = await ws.receive_text()
-        msg = orjson.loads(msg)
-        subscription_id = msg["result"]
-        logger.info(f"Subscription ID: {subscription_id}")
+        with ThreadPoolExecutor(max_workers=num_workers) as pool:
+            async with asyncio.TaskGroup() as tg:
+                async with aconnect_ws(env.WEBSOCKET_URL, ws_client) as ws:
+                    await ws.send_json(
+                        {
+                            "id": 1,
+                            "jsonrpc": "2.0",
+                            "method": "eth_subscribe",
+                            "params": ["newHeads"],
+                        }
+                    )
+                    msg = await ws.receive_text()
+                    msg = orjson.loads(msg)
+                    subscription_id = msg["result"]
+                    logger.info(f"Subscription ID: {subscription_id}")
+                    try:
+                        while True:
+                            message = await ws.receive_text()
+                            message = orjson.loads(message)
+                            block_number = int(
+                                message["params"]["result"]["number"], 16
+                            )
 
-        try:
-            while True:
-                message = await ws.receive_text()
-                start = time.perf_counter()
-                message = orjson.loads(message)
-                block_number = int(message["params"]["result"]["number"], 16)
-                logger.info(f"Start process block number: {block_number}")
+                            logger.info(f"Start process block number: {block_number}")
 
-                await extractor.run(
-                    start_block=block_number,
-                    end_block=block_number,
-                    process_batch_size=30,
-                    request_batch_size=30,
-                )
-                end = time.perf_counter()
-                logger.info(
-                    f"Done process block number: {block_number} - Elapsed: {end - start:.6f} seconds"
-                )
-        # except Exception as e:
-        #     logger.info(e)
-        finally:
-            await ws.send_json(
-                {
-                    "id": 1,
-                    "jsonrpc": "2.0",
-                    "method": "eth_unsubscribe",
-                    "params": [subscription_id],
-                }
-            )
+                            new_nodes = create_node(
+                                progress,
+                                task_id,
+                                connection_manager["rpc"],
+                                connection_manager.get("memgraph"),
+                                block_number,
+                                block_number,
+                                entities,
+                                exporters,
+                            )
 
-            await rpc_client.close()
-            await etherscan_client.close()
-            await binance_client.close()
+                            graph.add_nodes(new_nodes)
+
+                            await graph.run(tg, pool)
+
+                            await asyncio.sleep(0.1)
+                    except Exception as e:
+                        logger.info(repr(e))
+                    finally:
+                        await ws.send_json(
+                            {
+                                "id": 1,
+                                "jsonrpc": "2.0",
+                                "method": "eth_unsubscribe",
+                                "params": [subscription_id],
+                            }
+                        )
+
+                        await connection_manager.close()
 
 
 if __name__ == "__main__":
     args = parse_arg()
-    entity_types = args.entity_types.split(",")
-    exporter_types = args.exporter_types.split(",")
-    asyncio.run(main(entity_types, exporter_types))
+    entities = args.entities.split(",") if args.entities else []
+    exporters = args.exporters.split(",") if args.exporters else []
+    with asyncio.Runner() as runner:
+        runner.run(
+            main(
+                args.running_queue_size,
+                entities,
+                exporters,
+                args.num_workers,
+            )
+        )
 
 
-# python -m src.clis.realtime_ws \
-#     --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
-#     --exporter-types sqlite
+# python -m src.clis.realtime_ws --running-queue-size 5 \
+# --entities raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,pool,token,raw_trace,trace \
+# --exporters sqlite
