@@ -12,18 +12,15 @@ The main goal of this project is to create an Ethereum ETL codebase that anyone 
 - Richer information: More data from many source (binance, etherscan, 4byte)
 
 **Workflow Overview:**
-- Data Collection: Fetch online data from multiple sources.
-- Extraction & Enrichment: Process and enhance the raw data.
+- Collection: Fetch online data from multiple sources.
+- Extraction: Process and enhance the raw data.
 - Exporting: Send the processed data to the designated exporter.
 
 **Customization Points:**
-- Pick URI Strategy
+- Pick URI Strategy: fallback, roundrobin, random,...
 - Schema
 - Exporter
-- Cache service
 - Dex: currently support uniswapv2 and uniswapv3
-- Clients: Add more client due to use case.
-- RPC retry
 
 # How to use
 ## Enrironment
@@ -43,17 +40,18 @@ docker compose -f ./system/docker-compose up -d
 Historical Mode: Extract data from an RPC block range, process entities, and send them to the exporter.
 ```
 # Here how a full command looklike,  reduce range, remove contract, abi and exporter for fast try
-python -m src.clis.historical --start-block 23000000 --end-block 23005000 \
-    --process-batch-size 1000 --request-batch-size 30 \
-    --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
-    --exporter-types nats,sqlite
+python -m src.clis.historical --start-block 23170000 --end-block 23170030 \
+--pending-queue-size 1000 --running-queue-size 5 --request-batch-size 30 \
+--entities raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,pool,token,raw_trace,trace \
+--exporters sqlite
 ```
 
 Realtime Mode: Subscribe to new events via an RPC WebSocket. As soon as a new block is detected, extract entities and forward them to the exporter.
 ```
-python -m src.clis.realtime_ws \
-    --entity-types raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,contract,abi,pool,token,raw_trace,trace \
-    --exporter-types nats,sqlite
+# python -m src.clis.realtime_ws --running-queue-size 5 \
+# --entities raw_block,block,transaction,withdrawal,raw_receipt,receipt,log,transfer,event,account,pool,token,raw_trace,trace \
+# --exporters sqlite
+
 ```
 
 # Entity
@@ -67,10 +65,8 @@ python -m src.clis.realtime_ws \
 - Transfer
 - Pool
 - Token
-- Event: Create, mint, swap, burn for uniswapv2-like and uniswapv3-like: Erich using block, pool, token
+- Event: Create, mint, swap, burn for uniswapv2-like and uniswapv3-like
 - Account: wallet address
-- Contract: from etherscan
-- ABI: from contract
 - RawTrace: for object store
 - Trace
 
@@ -91,22 +87,10 @@ Clients must handle two types of errors:
 
 Retry attempts can be set to infinite since most errors are due to rate limiting. Default is currently 5 retries.
 
-## Existing Clients
-### RpcClient
+## RpcClient
 - Batch size: default request batchsize is well tested and good enough but you can try it your self.
 - Rate Limit: 50 requests/s (not official, chosen to balance speed without excessive failures).
 - URI Strategy: Uses round-robin selection with free URIs first and limited URIs later. This can be swapped for other strategies (e.g., random) to improve throughput.
-
-### BinanceClient
-- Used to fetch ETH prices at specific block timestamps.
-- Rate Limit: 50 requests/s (not official, not stress-tested, but stable in practice).
-### 4byteClient
-- Purpose: Decode event hashes.
-- Status: Currently unused.
-### EtherscanClient
-- Fetches contract information, including contract metadata and ABI.
-- Official Free Rate Limit: 5 requests/s.
-Note: Data from this client is not well-tested at scale due to slow performance.
 
 # Exporter
 Currently supported exporters:
@@ -115,18 +99,13 @@ Currently supported exporters:
 - ClickHouse → High-performance analytics database (currently limited to 'event' table and use all type as string).
     ⚠️ If ClickHouse does not have a proper schema defined, it will reject messages coming from NATS.
 
-# Cache
-- Default: Uses SQLite as the cache layer. 
-- Recommendation: Switch to Dragonfly (not redis) for better performance and scalability.
-Note: Some cached data (e.g., WETH price) is primarily for testing when repeatedly running queries over a block range.
-
 # Future Work
-- Centralize connection: create connection manager for databases, message queues, objec tsore, ...
-- Calculate token price of a pool: Contruct a token graph for this. Algorithm for this task - shortest path - is supportted by any graph database but recommend memgraph for speed and rich set of algorithm.
 - Manual Realtime CLI: Add support for a polling-based realtime mode that continuously calls RPC instead of relying on WebSocket subscriptions.
     - Motivation: If processing takes too long, events may be missed.
     - More critical for Solana (short block times) than Ethereum (≈15s per block).
-- Get eth price using batch if it timestamp follow block timestamp
+
+- fix the error mentioned in DEV file
+
 # Disclaimer
 ⚠️ This project is under active development and may contain bugs.
 

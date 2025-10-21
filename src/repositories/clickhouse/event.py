@@ -43,19 +43,6 @@ class EventRepository(BaseRepository):
                 log_index         String,
                 block_number      String,
 
-                timestamp         String,          -- match JSON field
-                eth_price         String,
-
-                token0_address    String,
-                token0_name       String,
-                token0_symbol     String,
-                token0_decimals   String,
-
-                token1_address    String,
-                token1_name       String,
-                token1_symbol     String,
-                token1_decimals   String,
-
                 updated_time      DateTime DEFAULT now()
             )
             ENGINE = NATS
@@ -83,19 +70,6 @@ class EventRepository(BaseRepository):
                 transaction_hash  String,
                 log_index         String,
                 block_number      String,
-
-                timestamp         String,          -- match JSON field
-                eth_price         String,
-
-                token0_address    String,
-                token0_name       String,
-                token0_symbol     String,
-                token0_decimals   String,
-
-                token1_address    String,
-                token1_name       String,
-                token1_symbol     String,
-                token1_decimals   String,
 
                 updated_time      DateTime DEFAULT now()
             )

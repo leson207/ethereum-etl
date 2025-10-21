@@ -1,22 +1,19 @@
 import asyncio
-import json
-from src.clients.rpc_client import RpcClient
+
+import msgpack
+
+from src.configs.connection_manager import connection_manager
 
 
 async def main():
-    client = RpcClient()
-    res = await client.get_receipt_by_block_number(block_numbers=[23171510])
-    res = res[0]["result"]
-    with open("tmp.json", "w") as f:
-        json.dump(res, f, indent=4)
+    msg = await connection_manager["jetstream"].get_last_msg("sample", "ethereum.event")
+    print(msg)
+    # payload = msgpack.packb(item, default=str, use_bin_type=True)
+    decode = msgpack.unpackb(msg.data)
+    print(decode)
 
-def tmp():
-    from src.abis.event import EVENT_HEX_SIGNATURES
-    print(EVENT_HEX_SIGNATURES["uniswap_v2"]["pair_created"].casefold())
-    print(EVENT_HEX_SIGNATURES["uniswap_v2"]["mint"].casefold())
-    print(EVENT_HEX_SIGNATURES["uniswap_v2"]["burn"].casefold())
-    print(EVENT_HEX_SIGNATURES["uniswap_v2"]["swap"])
 
 if __name__ == "__main__":
-    tmp()
-    # asyncio.run(main())
+    with asyncio.Runner() as runner:
+        runner.run(connection_manager.init_nats())
+        runner.run(main())
